@@ -5,7 +5,7 @@ The numbered task groups are ordered checkpoints. Complete and verify each group
 ## 1. Establish the npm workspace
 
 1. Convert the root package configuration to a private npm workspace containing `apps/server` and `apps/web`.
-2. Add discoverable root scripts for development, formatting verification, linting, type checking, tests, builds, smoke checks, and the complete CI sequence.
+2. Add discoverable root scripts for development, formatting verification, linting, type checking, Vitest validation tests, builds, smoke checks, and the complete CI sequence.
 3. Add shared, minimal formatting and linting configuration while allowing framework-specific configuration where necessary.
 4. Remove or relocate the old single-package starter files once they are no longer referenced.
 5. Refresh the lockfile through npm and confirm a clean locked install succeeds.
@@ -17,7 +17,7 @@ The numbered task groups are ordered checkpoints. Complete and verify each group
 1. Scaffold `apps/server` as a strict TypeScript NestJS application.
 2. Configure the NestJS Fastify adapter and a documented, overridable server port.
 3. Add a narrow `GET /health` controller that returns a stable healthy JSON response.
-4. Add an HTTP-level automated test for the status code and response contract.
+4. Add an HTTP-level Vitest validation test for the status code and response contract.
 5. Wire server lint, type-check, test, build, development, and start scripts into the root commands.
 
 **Checkpoint:** the server builds, its focused test passes, and a running instance answers `GET /health` with HTTP `200`.
@@ -38,13 +38,13 @@ The numbered task groups are ordered checkpoints. Complete and verify each group
 4. Add a reusable main layout composed from dedicated header, main-content, and footer subcomponents, defining each subcomponent in its own file.
 5. Add a small global CSS file, import it from the root layout, and rely on Next.js to link its generated stylesheet in the document.
 6. Keep the page server-rendered and intentionally small; do not add dashboard data, booking controls, a navigation system, or final visual styling from later phases.
-7. Add a focused render test for the primary heading, introductory content, and layout landmarks.
+7. Add a focused Vitest render validation test for the primary heading, introductory content, and layout landmarks.
 
 **Checkpoint:** the root URL renders the recognizable AgentClinic home page, its focused test passes, and the page contains no later-phase functionality.
 
 ## 5. Complete repository-level checks and documentation
 
-1. Make each root check execute across both workspaces with clear failure output.
+1. Make each root check execute across both workspaces with clear failure output, including `npm run test:validation` for Vitest validation tests.
 2. Add runtime smoke commands that start production builds, probe the server health endpoint and web root, and reliably stop child processes.
 3. Update `.gitignore` for workspace dependencies, framework output, coverage, logs, environment files, and local artifacts.
 4. Update the README with Node.js and npm prerequisites, install steps, root commands, ports, and the two local URLs.
@@ -55,7 +55,7 @@ The numbered task groups are ordered checkpoints. Complete and verify each group
 ## 6. Add continuous integration
 
 1. Add the repository's CI workflow using an active Node.js LTS release and `npm ci`.
-2. Run the single root CI command that covers formatting, linting, types, tests, builds, and runtime smoke checks.
+2. Run the single root CI command that covers formatting, linting, types, the Vitest validation-test script, builds, and runtime smoke checks.
 3. Add dependency or build caching only if it does not obscure the workflow or alter correctness.
 4. Confirm that a deliberately failing check makes the workflow fail, then restore the valid state.
 

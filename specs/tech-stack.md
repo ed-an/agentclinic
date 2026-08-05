@@ -10,7 +10,7 @@
 - **Data access:** Prisma ORM, including versioned schema migrations.
 - **Styling:** Tailwind CSS with a small set of reusable design tokens and accessible UI primitives.
 - **Validation:** NestJS validation pipes and explicit DTO schemas at every server boundary; Zod may be used for shared web form schemas.
-- **Testing:** Vitest and Testing Library for focused tests; Playwright for critical browser journeys.
+- **Testing:** Vitest is the standard runner for automated validation tests, with Testing Library for focused UI tests; Playwright is reserved for critical browser journeys.
 - **Quality controls:** ESLint, Prettier, type checking, and automated tests in continuous integration.
 
 Dependencies should be kept current, but exact versions belong in the package manifest and lockfile rather than this constitution.
@@ -58,6 +58,7 @@ The database enforces required relationships and uniqueness. TypeScript types co
 ## Verification rules
 
 - Every change must pass formatting, linting, type checking, and relevant tests.
+- Acceptance and validation criteria that can be automated must be expressed as Vitest tests and run through the root `npm run test:validation` script.
 - Business rules require focused automated tests.
 - Critical journeys—finding therapy, booking an appointment, and staff appointment management—require browser-level coverage once introduced.
 - Schema migrations must be tested against a clean database and an existing development database.

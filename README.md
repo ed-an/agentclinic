@@ -41,7 +41,7 @@ All contributor commands run from the repository root:
 npm run format:check  # verify formatting
 npm run lint          # lint both applications
 npm run typecheck     # strict TypeScript checks without emitting files
-npm test              # focused server and web tests
+npm run test:validation # Vitest validation tests for both applications
 npm run build         # production builds
 npm run smoke         # probe both production builds and stop them afterward
 npm run ci            # every merge check above, in order

@@ -9,7 +9,7 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 **Status:** Complete
 
 - Establish a workspace containing a NestJS TypeScript server and Next.js TypeScript web application.
-- Add formatting, linting, type checking, and a basic test command.
+- Add formatting, linting, type checking, and a root Vitest validation-test command.
 - Add a continuous-integration check for those commands.
 
 **Done when:** the server health endpoint responds, a minimal page renders, and all checks pass in CI.

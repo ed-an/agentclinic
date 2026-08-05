@@ -32,7 +32,7 @@ Establish a reliable npm workspace in which:
 
 - The root `package.json` declares `apps/*` as npm workspaces and remains private.
 - A clean dependency installation uses the committed lockfile.
-- Root commands cover formatting verification, linting, type checking, testing, production builds, and the complete CI sequence.
+- Root commands cover formatting verification, linting, type checking, Vitest validation tests through `npm run test:validation`, production builds, and the complete CI sequence.
 - The README explains the prerequisites and the shortest path to install, run, check, test, and build the workspace.
 
 ### Server
@@ -40,7 +40,7 @@ Establish a reliable npm workspace in which:
 - `apps/server` is a NestJS application written in TypeScript.
 - NestJS runs through its Fastify adapter.
 - `GET /health` returns HTTP `200` and a small JSON response that clearly indicates the service is healthy.
-- The health route has an automated test exercising the HTTP boundary.
+- The health route has a Vitest validation test exercising the HTTP boundary.
 - The server has no database dependency or domain endpoints in this phase.
 
 ### Web
@@ -52,12 +52,12 @@ Establish a reliable npm workspace in which:
 - The global page layout is a reusable component composed from dedicated header, main-content, and footer subcomponents, with each subcomponent defined in its own file.
 - A global CSS file is imported by the root layout so Next.js links the generated stylesheet in rendered documents.
 - The home page remains intentionally minimal: it has no dashboard data, booking controls, navigation system, or final visual design. The accessible clinic shell belongs to Phase 1.
-- A focused automated test proves that the home page renders its primary heading and introductory content.
+- A focused Vitest validation test proves that the home page renders its primary heading and introductory content.
 
 ### Continuous integration
 
 - CI installs dependencies from the lockfile without modifying it.
-- CI runs formatting verification, linting, strict type checking, tests, and production builds from the root.
+- CI runs formatting verification, linting, strict type checking, the root Vitest validation-test script, and production builds.
 - CI performs runtime smoke checks for both the server health endpoint and the rendered web page.
 - CI fails when any required command or smoke check fails.
 

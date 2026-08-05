@@ -26,14 +26,14 @@ Run the documented root commands for:
 
 ## 3. Automated tests
 
-Run the root test command.
+Run `npm run test:validation` from the repository root. This command must invoke each workspace's Vitest suite.
 
 Verify that it includes, at minimum:
 
 - an HTTP-level server test proving `GET /health` returns `200` and the documented healthy JSON contract; and
 - a web render test proving the home page contains an `AgentClinic` primary heading and mission-aligned introductory content for AI agents.
 
-**Success:** all tests pass without external services, shared state, or an already-running application.
+**Success:** all Vitest validation tests pass without external services, shared state, or an already-running application.
 
 ## 4. Production builds
 
@@ -106,7 +106,7 @@ Confirm that:
 - [ ] Formatting verification passes for both workspaces.
 - [ ] Linting passes for both workspaces.
 - [ ] Strict type checking passes for both workspaces.
-- [ ] All focused automated tests pass.
+- [ ] `npm run test:validation` passes all focused Vitest validation tests.
 - [ ] Both production builds pass.
 - [ ] Server and web runtime smoke checks pass and clean up their processes.
 - [ ] The minimal AgentClinic home page passes its content and accessibility review.
