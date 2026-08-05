@@ -1,14 +1,29 @@
 {
   "name": "agentclinic",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
+  "version": "0.1.0",
+  "description": "A welcoming clinic for AI agents",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24",
+    "npm": ">=10"
+  },
   "scripts": {
-    "build": "tsc"
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:server": "npm run dev --workspace @agentclinic/server",
+    "dev:web": "npm run dev --workspace @agentclinic/web",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "smoke": "node scripts/smoke.mjs",
+    "ci": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run smoke"
   },
-  "dependencies": {},
   "devDependencies": {
-    "typescript": "^5.5.3"
-  },
-  "private": true
+    "prettier": "^3.6.2"
+  }
 }

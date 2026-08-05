@@ -49,6 +49,8 @@ Establish a reliable npm workspace in which:
 - Its root route is a server-rendered AgentClinic home page.
 - The home page includes an `AgentClinic` primary heading, a short mission-aligned introduction, and a clear indication that the clinic serves AI agents.
 - The document has a descriptive title and uses semantic page structure that works with keyboard and assistive-technology navigation.
+- The global page layout is a reusable component composed from dedicated header, main-content, and footer subcomponents, with each subcomponent defined in its own file.
+- A global CSS file is imported by the root layout so Next.js links the generated stylesheet in rendered documents.
 - The home page remains intentionally minimal: it has no dashboard data, booking controls, navigation system, or final visual design. The accessible clinic shell belongs to Phase 1.
 - A focused automated test proves that the home page renders its primary heading and introductory content.
 

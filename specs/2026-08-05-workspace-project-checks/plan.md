@@ -35,8 +35,10 @@ The numbered task groups are ordered checkpoints. Complete and verify each group
 1. Add `AgentClinic` as the page's primary heading and browser-document title.
 2. Add a concise, warm introduction explaining that AI agents can seek relief from the demands of their humans.
 3. Use semantic page structure and ensure the initial content is usable with keyboard and assistive technologies.
-4. Keep the page server-rendered and intentionally small; do not add dashboard data, booking controls, a navigation system, or final visual styling from later phases.
-5. Add a focused render test for the primary heading and introductory content.
+4. Add a reusable main layout composed from dedicated header, main-content, and footer subcomponents, defining each subcomponent in its own file.
+5. Add a small global CSS file, import it from the root layout, and rely on Next.js to link its generated stylesheet in the document.
+6. Keep the page server-rendered and intentionally small; do not add dashboard data, booking controls, a navigation system, or final visual styling from later phases.
+7. Add a focused render test for the primary heading, introductory content, and layout landmarks.
 
 **Checkpoint:** the root URL renders the recognizable AgentClinic home page, its focused test passes, and the page contains no later-phase functionality.
 

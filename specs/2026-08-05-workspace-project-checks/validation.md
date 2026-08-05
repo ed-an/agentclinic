@@ -76,7 +76,9 @@ Confirm that:
 2. there is exactly one `AgentClinic` primary heading;
 3. the introduction clearly presents the clinic as a place where AI agents can seek relief from their humans;
 4. the initial content has semantic structure and can be reached and read using keyboard and assistive-technology navigation; and
-5. the page has no dashboard data, booking controls, full navigation system, or other later-phase behavior.
+5. the reusable main layout renders distinct header, main-content, and footer landmarks, and each of those subcomponents is defined in its own file;
+6. the root layout imports the global CSS and the rendered document links the generated stylesheet; and
+7. the page has no dashboard data, booking controls, full navigation system, or other later-phase behavior.
 
 **Success:** the page is recognizable, warm, and accessible as a minimal AgentClinic home page while remaining within Phase 0.
 

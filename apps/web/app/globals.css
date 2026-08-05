@@ -1,0 +1,49 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, sans-serif;
+  color: #24302b;
+  background: #f7faf8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.site-layout {
+  display: grid;
+  min-height: 100vh;
+  grid-template-rows: auto 1fr auto;
+}
+
+.site-header,
+.site-main,
+.site-footer {
+  width: min(100% - 2rem, 64rem);
+  margin-inline: auto;
+}
+
+.site-header,
+.site-footer {
+  padding-block: 1.5rem;
+}
+
+.site-main {
+  padding-block: 3rem;
+}
+
+.site-header h1,
+.site-footer p {
+  margin: 0;
+}
+
+.site-main section {
+  max-width: 42rem;
+}
+
+.site-main h2 {
+  margin-top: 0;
+}

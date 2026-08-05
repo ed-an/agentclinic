@@ -6,6 +6,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 0 — Workspace and project checks
 
+**Status:** Complete
+
 - Establish a workspace containing a NestJS TypeScript server and Next.js TypeScript web application.
 - Add formatting, linting, type checking, and a basic test command.
 - Add a continuous-integration check for those commands.
