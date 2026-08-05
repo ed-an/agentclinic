@@ -20,9 +20,10 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test:validation",
     "test:validation": "npm run test --workspaces --if-present",
+    "test:browser": "npm run test:browser --workspace @agentclinic/web",
     "build": "npm run build --workspaces --if-present",
     "smoke": "node scripts/smoke.mjs",
-    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test:validation && npm run build && npm run smoke"
+    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test:validation && npm run build && npm run smoke && npm run test:browser"
   },
   "devDependencies": {
     "prettier": "^3.6.2"

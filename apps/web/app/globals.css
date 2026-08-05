@@ -1,12 +1,29 @@
-:root {
-  color-scheme: light;
-  font-family: system-ui, sans-serif;
-  color: #24302b;
-  background: #f7faf8;
+@import 'tailwindcss';
+
+@theme {
+  --color-clinic-canvas: #f6faf7;
+  --color-clinic-surface: #ffffff;
+  --color-clinic-surface-soft: #eaf4ed;
+  --color-clinic-ink: #18332a;
+  --color-clinic-muted: #52665f;
+  --color-clinic-brand: #176b4d;
+  --color-clinic-brand-strong: #0f4f39;
+  --color-clinic-accent: #f4b860;
+  --color-clinic-danger: #a33636;
+  --color-clinic-border: #bed2c5;
+  --font-sans: Arial, Helvetica, sans-serif;
+  --radius-clinic: 1.25rem;
+  --shadow-clinic: 0 1rem 3rem rgb(24 51 42 / 10%);
 }
 
-* {
-  box-sizing: border-box;
+:root {
+  color-scheme: light;
+  background: var(--color-clinic-canvas);
+  color: var(--color-clinic-ink);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -14,46 +31,22 @@ body {
   overflow-wrap: anywhere;
 }
 
-.site-layout {
-  display: grid;
-  min-height: 100vh;
-  grid-template-rows: auto 1fr auto;
+*:focus-visible {
+  outline: 3px solid var(--color-clinic-brand);
+  outline-offset: 3px;
 }
 
-.site-header,
-.site-main,
-.site-footer {
-  width: min(100% - 2rem, 64rem);
-  margin-inline: auto;
-}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 
-.site-header,
-.site-footer {
-  padding-block: clamp(1rem, 4vw, 1.5rem);
-}
-
-.site-main {
-  padding-block: clamp(2rem, 8vw, 4rem);
-}
-
-.site-header h1,
-.site-footer p {
-  margin: 0;
-}
-
-.site-main section {
-  max-width: 42rem;
-}
-
-.site-main h2 {
-  margin-top: 0;
-  font-size: clamp(1.5rem, 5vw, 2.25rem);
-}
-
-@media (min-width: 48rem) {
-  .site-header,
-  .site-main,
-  .site-footer {
-    width: min(100% - 4rem, 64rem);
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

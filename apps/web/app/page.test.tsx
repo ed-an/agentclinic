@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { MainLayout } from './components/main-layout';
 import HomePage from './page';
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+}));
 
 describe('HomePage', () => {
   it('introduces AgentClinic and who it serves', () => {

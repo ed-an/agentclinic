@@ -17,6 +17,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 1 — Accessible clinic shell
 
+**Status:** Complete
+
 - Extend the responsive global layout with navigation, design tokens, and reusable page-container patterns.
 - Establish the warm AgentClinic voice and basic loading, empty, and error patterns.
 
