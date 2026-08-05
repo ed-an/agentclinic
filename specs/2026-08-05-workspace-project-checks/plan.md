@@ -37,10 +37,11 @@ The numbered task groups are ordered checkpoints. Complete and verify each group
 3. Use semantic page structure and ensure the initial content is usable with keyboard and assistive technologies.
 4. Add a reusable main layout composed from dedicated header, main-content, and footer subcomponents, defining each subcomponent in its own file.
 5. Add a small global CSS file, import it from the root layout, and rely on Next.js to link its generated stylesheet in the document.
-6. Keep the page server-rendered and intentionally small; do not add dashboard data, booking controls, a navigation system, or final visual styling from later phases.
-7. Add a focused Vitest render validation test for the primary heading, introductory content, and layout landmarks.
+6. Style the layout mobile-first with fluid spacing, constrained readable line lengths, and a breakpoint that adapts the page for wider viewports without introducing horizontal page scrolling.
+7. Keep the page server-rendered and intentionally small; do not add dashboard data, booking controls, a navigation system, or final visual styling from later phases.
+8. Add a focused Vitest render validation test for the primary heading, introductory content, and layout landmarks.
 
-**Checkpoint:** the root URL renders the recognizable AgentClinic home page, its focused test passes, and the page contains no later-phase functionality.
+**Checkpoint:** the root URL renders the recognizable AgentClinic home page, reflows cleanly at phone and desktop widths, its focused test passes, and the page contains no later-phase functionality.
 
 ## 5. Complete repository-level checks and documentation
 

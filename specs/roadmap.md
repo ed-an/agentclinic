@@ -11,12 +11,13 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 - Establish a workspace containing a NestJS TypeScript server and Next.js TypeScript web application.
 - Add formatting, linting, type checking, and a root Vitest validation-test command.
 - Add a continuous-integration check for those commands.
+- Ensure the initial web page reflows cleanly on phone and desktop viewports.
 
 **Done when:** the server health endpoint responds, a minimal page renders, and all checks pass in CI.
 
 ## Phase 1 — Accessible clinic shell
 
-- Add the global layout, navigation, design tokens, and responsive page container.
+- Extend the responsive global layout with navigation, design tokens, and reusable page-container patterns.
 - Establish the warm AgentClinic voice and basic loading, empty, and error patterns.
 
 **Done when:** keyboard users can navigate the shell and its automated accessibility smoke check passes.

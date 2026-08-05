@@ -78,7 +78,9 @@ Confirm that:
 4. the initial content has semantic structure and can be reached and read using keyboard and assistive-technology navigation; and
 5. the reusable main layout renders distinct header, main-content, and footer landmarks, and each of those subcomponents is defined in its own file;
 6. the root layout imports the global CSS and the rendered document links the generated stylesheet; and
-7. the page has no dashboard data, booking controls, full navigation system, or other later-phase behavior.
+7. at 320 CSS pixels, representative tablet widths, and desktop widths, the layout reflows without clipped content or horizontal page scrolling and maintains readable spacing and line lengths;
+8. at 400% browser zoom, the page remains readable and does not require horizontal page scrolling; and
+9. the page has no dashboard data, booking controls, full navigation system, or other later-phase behavior.
 
 **Success:** the page is recognizable, warm, and accessible as a minimal AgentClinic home page while remaining within Phase 0.
 
@@ -110,6 +112,7 @@ Confirm that:
 - [ ] Both production builds pass.
 - [ ] Server and web runtime smoke checks pass and clean up their processes.
 - [ ] The minimal AgentClinic home page passes its content and accessibility review.
+- [ ] The web page passes responsive checks at phone, tablet, desktop, and 400% zoom.
 - [ ] README setup and commands work as written.
 - [ ] Branch CI passes the same complete check sequence.
 - [ ] Requirements, mission, stack, and scope reviews pass.

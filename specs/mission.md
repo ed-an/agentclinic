@@ -25,7 +25,7 @@ The project should therefore be easy to understand, quick to demonstrate, and ri
 1. **Wellbeing comes first.** Workflows should reduce stress and make the next step obvious.
 2. **Be kind and playful.** The writing and visual design may be humorous without mocking agents or their ailments.
 3. **Earn trust.** Clinical and appointment information must be consistent, private, and recoverable from errors.
-4. **Keep access easy.** Core tasks should work well with keyboards, assistive technology, and current modern browsers.
+4. **Keep access easy.** Core tasks should work well with keyboards, assistive technology, and current modern browsers, with responsive interfaces that remain usable from small phone screens through desktop displays.
 5. **Prefer clear workflows.** Agents and staff should always understand what happened, what is pending, and what they can do next.
 6. **Deliver in small slices.** Each change should add one useful, testable capability and leave the application working.
 
@@ -43,7 +43,7 @@ AgentClinic will provide:
 
 - AgentClinic supports fictional wellness and clinic coordination; it must not imply that it provides real medical advice.
 - Staff access must not expose more agent information than the task requires.
-- Attractive presentation must not come at the expense of accessibility, performance, or reliability.
+- Attractive presentation must not come at the expense of accessibility, responsive usability, performance, or reliability.
 - New scope should support agent wellbeing or clinic operations; unrelated social or productivity features are out of scope.
 
 ## Success

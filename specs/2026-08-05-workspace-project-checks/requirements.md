@@ -51,6 +51,7 @@ Establish a reliable npm workspace in which:
 - The document has a descriptive title and uses semantic page structure that works with keyboard and assistive-technology navigation.
 - The global page layout is a reusable component composed from dedicated header, main-content, and footer subcomponents, with each subcomponent defined in its own file.
 - A global CSS file is imported by the root layout so Next.js links the generated stylesheet in rendered documents.
+- The page uses a mobile-first responsive layout that preserves readable spacing and line lengths, reflows without horizontal page scrolling, and remains usable from a 320 CSS-pixel phone viewport through desktop widths.
 - The home page remains intentionally minimal: it has no dashboard data, booking controls, navigation system, or final visual design. The accessible clinic shell belongs to Phase 1.
 - A focused Vitest validation test proves that the home page renders its primary heading and introductory content.
 
@@ -76,7 +77,7 @@ Establish a reliable npm workspace in which:
 - Domain models or endpoints for agents, ailments, therapies, or appointments.
 - Authentication or authorization.
 - Shared domain packages or a general-purpose component library.
-- A complete navigation system, responsive clinic shell, or polished visual design; these belong to Phase 1.
+- A complete navigation system, advanced responsive clinic-shell patterns, or polished visual design; these belong to Phase 1. The minimal page must still satisfy the product-wide responsive-design requirements.
 - Deployment infrastructure, production monitoring, and release automation.
 - Microservices, containers, or monorepo orchestration beyond npm workspaces.
 

@@ -11,6 +11,7 @@
 
 body {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .site-layout {
@@ -28,11 +29,11 @@ body {
 
 .site-header,
 .site-footer {
-  padding-block: 1.5rem;
+  padding-block: clamp(1rem, 4vw, 1.5rem);
 }
 
 .site-main {
-  padding-block: 3rem;
+  padding-block: clamp(2rem, 8vw, 4rem);
 }
 
 .site-header h1,
@@ -46,4 +47,13 @@ body {
 
 .site-main h2 {
   margin-top: 0;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+}
+
+@media (min-width: 48rem) {
+  .site-header,
+  .site-main,
+  .site-footer {
+    width: min(100% - 4rem, 64rem);
+  }
 }

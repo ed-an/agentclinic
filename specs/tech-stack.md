@@ -23,11 +23,12 @@ Dependencies should be kept current, but exact versions belong in the package ma
 4. Treat the NestJS server as the authoritative boundary for business rules, persistence, authentication, and authorization.
 5. The Next.js application consumes the server's versioned HTTP API. It must not connect directly to SQLite or duplicate server business rules.
 6. Render web pages on the server by default. Add client components only where browser state or interaction requires them.
-7. Validate all untrusted input in NestJS even when equivalent web validation exists.
-8. Store dates in UTC and present them in the user's timezone. Appointment operations must handle concurrent updates safely.
-9. Apply authorization in NestJS. Agent and staff responses must expose only the data allowed for their role.
-10. Make database changes through committed migrations and provide seed data for local development.
-11. Prefer NestJS, Node.js, and web-platform primitives before adding a new dependency.
+7. Build web interfaces mobile-first with fluid sizing and intentional breakpoints; content and controls must reflow without horizontal page scrolling or loss of functionality.
+8. Validate all untrusted input in NestJS even when equivalent web validation exists.
+9. Store dates in UTC and present them in the user's timezone. Appointment operations must handle concurrent updates safely.
+10. Apply authorization in NestJS. Agent and staff responses must expose only the data allowed for their role.
+11. Make database changes through committed migrations and provide seed data for local development.
+12. Prefer NestJS, Node.js, and web-platform primitives before adding a new dependency.
 
 ## Why NestJS
 
@@ -52,7 +53,7 @@ The database enforces required relationships and uniqueness. TypeScript types co
 - Support the current and previous major versions of evergreen browsers.
 - Meet WCAG 2.2 AA for the implemented journeys.
 - Provide useful loading, empty, validation, success, and failure states.
-- Use responsive layouts suitable for phones and desktop staff dashboards.
+- Use mobile-first responsive layouts that reflow from 320 CSS pixels through wide desktop displays, preserve readable line lengths, and avoid horizontal page scrolling at 400% zoom.
 - Keep the visual voice warm and appealing while maintaining readable contrast and predictable controls.
 
 ## Verification rules
@@ -61,6 +62,7 @@ The database enforces required relationships and uniqueness. TypeScript types co
 - Acceptance and validation criteria that can be automated must be expressed as Vitest tests and run through the root `npm run test:validation` script.
 - Business rules require focused automated tests.
 - Critical journeys—finding therapy, booking an appointment, and staff appointment management—require browser-level coverage once introduced.
+- Validate responsive behavior at representative phone, tablet, and desktop viewport widths; automate critical responsive regressions in browser tests once those journeys are introduced.
 - Schema migrations must be tested against a clean database and an existing development database.
 - Security, accessibility, or data-loss regressions block release.
 
