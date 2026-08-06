@@ -1,10 +1,15 @@
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import process from 'node:process';
 
 const serverPort = Number(process.env.SMOKE_SERVER_PORT ?? 3101);
 const webPort = Number(process.env.SMOKE_WEB_PORT ?? 3100);
 const children = [];
 const canSignalProcessGroups = process.platform !== 'win32';
+const databaseDirectory = mkdtempSync(join(tmpdir(), 'agentclinic-smoke-'));
+const databaseUrl = `file:${join(databaseDirectory, 'smoke.db')}`;
 
 function start(command, args, env) {
   const child = spawn(command, args, {
@@ -42,10 +47,14 @@ function stopChildren() {
   for (const child of children) {
     if (child.killed || child.pid === undefined) continue;
 
-    if (canSignalProcessGroups) {
-      process.kill(-child.pid, 'SIGTERM');
-    } else {
-      child.kill('SIGTERM');
+    try {
+      if (canSignalProcessGroups) {
+        process.kill(-child.pid, 'SIGTERM');
+      } else {
+        child.kill('SIGTERM');
+      }
+    } catch (error) {
+      if (error?.code !== 'ESRCH') throw error;
     }
   }
 }
@@ -60,8 +69,17 @@ process.on('SIGTERM', () => {
 });
 
 try {
+  execFileSync('npm', ['run', 'db:migrate:deploy'], {
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+    stdio: 'inherit',
+  });
+  execFileSync('npm', ['run', 'db:seed'], {
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+    stdio: 'inherit',
+  });
   start('npm', ['run', 'start', '--workspace', '@agentclinic/server'], {
     PORT: String(serverPort),
+    DATABASE_URL: databaseUrl,
   });
   await probe(
     `http://127.0.0.1:${serverPort}/health`,
@@ -91,4 +109,5 @@ try {
   );
 } finally {
   stopChildren();
+  rmSync(databaseDirectory, { recursive: true, force: true });
 }

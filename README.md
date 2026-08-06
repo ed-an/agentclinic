@@ -41,6 +41,40 @@ Override the server port with `PORT`, for example `PORT=4001 npm run
 dev:server`. Next.js accepts its standard `-p` option after `--` when running
 the web workspace directly.
 
+## Local database
+
+The NestJS server is the only workspace that owns Prisma or opens SQLite. By
+default, server and database commands use `apps/server/prisma/dev.db`. Copy
+`.env.example` to `.env` to make that setting explicit or set `DATABASE_URL`
+to another SQLite `file:` URL:
+
+```sh
+cp .env.example .env
+npm run prisma:generate
+npm run db:migrate:deploy
+npm run db:seed
+```
+
+`db:migrate:deploy` non-interactively applies migrations already committed to
+the repository. When intentionally changing the schema in a future phase, use
+`npm run db:migrate:dev -- --name descriptive_migration_name` to create and
+apply a migration for review.
+
+The Phase 2 baseline deliberately contains no domain tables, and its seed
+command verifies connectivity without inserting placeholder records. Phase 3
+will add the Agent model and deterministic Agent records. The seed can safely
+be run repeatedly and reports when the persistent foundation is ready.
+
+To reset only the database selected by `DATABASE_URL`, run:
+
+```sh
+npm run db:reset
+```
+
+**Warning:** reset is destructive. Confirm `DATABASE_URL` identifies the local
+development database you intend to erase before running it. Never use this
+command against a database whose contents must be preserved.
+
 ## Checks
 
 All contributor commands run from the repository root:
@@ -58,4 +92,6 @@ npm run ci            # every merge check above, in order
 
 Run `npm run format` to apply Prettier formatting. The smoke check uses ports
 3101 and 3100 by default; override them with `SMOKE_SERVER_PORT` and
-`SMOKE_WEB_PORT`.
+`SMOKE_WEB_PORT`. Persistence validation and smoke checks create isolated
+temporary SQLite databases, migrate and seed them, and remove them afterward;
+they do not open the local development database.

@@ -1,0 +1,2 @@
+-- Phase 2 establishes migration history without introducing domain tables.
+-- The Agent model and its records belong to Phase 3.
