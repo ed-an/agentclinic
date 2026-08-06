@@ -26,6 +26,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 2 — Persistent foundation
 
+**Status:** Complete
+
 - Connect the NestJS server to SQLite through Prisma.
 - Add the first migration and deterministic local seed command.
 
