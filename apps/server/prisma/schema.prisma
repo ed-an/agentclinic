@@ -6,3 +6,12 @@ generator client {
 datasource db {
   provider = "sqlite"
 }
+
+model Agent {
+  id      String @id
+  name    String
+  model   String
+  summary String
+
+  @@index([name, id])
+}

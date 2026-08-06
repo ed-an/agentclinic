@@ -35,6 +35,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 3 — Agent directory
 
+**Status:** Complete
+
 - Add the Agent model and seed records.
 - Add read-only agent list and detail endpoints to the server.
 - Show staff a read-only list of agents and an agent detail page using those endpoints.

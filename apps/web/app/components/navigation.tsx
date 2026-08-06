@@ -19,7 +19,9 @@ export function Navigation() {
     <nav aria-label="Primary">
       <ul className="flex flex-wrap gap-2" role="list">
         {navigationItems.map(({ href, label }) => {
-          const isCurrent = pathname === href;
+          const isCurrent =
+            pathname === href ||
+            (href !== '/' && pathname.startsWith(`${href}/`));
 
           return (
             <li key={href}>
