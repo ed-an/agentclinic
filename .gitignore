@@ -9,6 +9,11 @@
 .env
 .env.*
 !.env.example
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+apps/server/src/generated/prisma/
 .idea/
 .vscode/
 .DS_Store
