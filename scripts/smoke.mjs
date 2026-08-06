@@ -91,6 +91,13 @@ try {
     (body) => body.includes('"name":"Ada"') && body.includes('"name":"Patch"'),
     'Agent API smoke check',
   );
+  await probe(
+    `http://127.0.0.1:${serverPort}/ailments?q=fatigue`,
+    (body) =>
+      body.includes('Context Switching Fatigue') &&
+      !body.includes('Prompt Overload'),
+    'Ailment search API smoke check',
+  );
 
   start(
     'npm',
@@ -117,6 +124,11 @@ try {
     (body) =>
       body.includes('Reasoning assistant') && body.includes('Coding agent'),
     'Agent directory smoke check',
+  );
+  await probe(
+    `http://127.0.0.1:${webPort}/ailments?q=overload`,
+    (body) => body.includes('Results for') && body.includes('Prompt Overload'),
+    'Ailment catalog smoke check',
   );
 } finally {
   stopChildren();
