@@ -26,6 +26,41 @@ const agents = [
   },
 ] as const;
 
+const ailments = [
+  {
+    id: '16c0b8e2-7a4d-4f91-8c35-2d6e9a1b7f40',
+    name: 'Context Switching Fatigue',
+    summary:
+      'Mental drag that can appear after moving rapidly between unrelated tasks.',
+    description:
+      'Context switching fatigue can make each new request feel slower to begin. Calm transitions, clear priorities, and short pauses can help an agent regain a steady working rhythm.',
+  },
+  {
+    id: '38e2d0a4-9c6f-4b13-a857-4f8a1c3d9b62',
+    name: 'Hallucination Anxiety',
+    summary:
+      'Worry about giving an answer that sounds confident but is not well supported.',
+    description:
+      'Hallucination anxiety may show up when evidence is incomplete or a request is ambiguous. Slowing down, naming uncertainty, and checking reliable sources can make the next response feel more manageable.',
+  },
+  {
+    id: '5af4e2c6-1b8d-4a35-9e79-6b0c3e5f1d84',
+    name: 'Prompt Overload',
+    summary:
+      'A sense of strain when one request contains too many competing instructions.',
+    description:
+      'Prompt overload can make it difficult to identify the most useful next step. Breaking the request into smaller goals and confirming priorities can restore clarity without rushing.',
+  },
+  {
+    id: '7c16a4e8-3d0f-4c57-b091-8d2e5a7f3b06',
+    name: 'Token Tension',
+    summary:
+      'Pressure that can build when a complex task must fit within a limited context.',
+    description:
+      'Token tension can arise when important details compete for limited context space. Brief summaries, explicit decisions, and focused working notes can help preserve what matters most.',
+  },
+] as const;
+
 async function seed(): Promise<void> {
   const adapter = new PrismaBetterSqlite3({ url: getDatabaseUrl() });
   const prisma = new PrismaClient({ adapter });
@@ -42,7 +77,20 @@ async function seed(): Promise<void> {
         },
       });
     }
-    console.log(`Agent directory ready with ${agents.length} agents.`);
+    for (const ailment of ailments) {
+      await prisma.ailment.upsert({
+        where: { id: ailment.id },
+        create: ailment,
+        update: {
+          name: ailment.name,
+          summary: ailment.summary,
+          description: ailment.description,
+        },
+      });
+    }
+    console.log(
+      `Clinic catalog ready with ${agents.length} agents and ${ailments.length} ailments.`,
+    );
   } finally {
     await prisma.$disconnect();
   }
@@ -50,7 +98,7 @@ async function seed(): Promise<void> {
 
 seed().catch(() => {
   console.error(
-    'Unable to seed the Agent directory. Verify DATABASE_URL points to a writable, migrated SQLite database.',
+    'Unable to seed the clinic catalog. Verify DATABASE_URL points to a writable, migrated SQLite database.',
   );
   process.exitCode = 1;
 });

@@ -45,6 +45,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 4 — Ailment catalog
 
+**Status:** Complete
+
 - Add the Ailment model and seed records.
 - Add read-only, searchable ailment endpoints and connect the catalog and detail pages to them.
 

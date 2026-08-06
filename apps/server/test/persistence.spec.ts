@@ -16,6 +16,7 @@ const repositoryRoot = resolve(serverRoot, '../..');
 
 interface DatabaseState {
   agents: unknown[];
+  ailments: unknown[];
   migrations: unknown[];
   tables: string[];
 }
@@ -41,7 +42,61 @@ function readDatabaseState(databasePath: string): DatabaseState {
           )
           .all()
       : [];
-    return { agents, migrations, tables };
+    const ailments = tables.includes('Ailment')
+      ? database
+          .prepare(
+            'SELECT id, name, summary, description FROM Ailment ORDER BY name, id',
+          )
+          .all()
+      : [];
+    return { agents, ailments, migrations, tables };
+  } finally {
+    database.close();
+  }
+}
+
+async function createPhase3Database(databasePath: string): Promise<void> {
+  await createPhase2Database(databasePath);
+  const migrationName = '20260806190000_agent_directory';
+  const migration = await readFile(
+    join(serverRoot, `prisma/migrations/${migrationName}/migration.sql`),
+    'utf8',
+  );
+  const database = new DatabaseSync(databasePath);
+  try {
+    database.exec(migration);
+    database
+      .prepare(
+        `INSERT INTO _prisma_migrations
+          (id, checksum, finished_at, migration_name, applied_steps_count)
+         VALUES (?, ?, current_timestamp, ?, 1)`,
+      )
+      .run(
+        randomUUID(),
+        createHash('sha256').update(migration).digest('hex'),
+        migrationName,
+      );
+    const insert = database.prepare(
+      'INSERT INTO Agent (id, name, model, summary) VALUES (?, ?, ?, ?)',
+    );
+    insert.run(
+      '0b3d5a7e-1f24-4c68-9a02-3e5f7b8d1c40',
+      'Ada',
+      'Reasoning assistant',
+      'A thoughtful problem-solver learning to make room for rest between complex requests.',
+    );
+    insert.run(
+      '2c6e8a10-3b45-4d79-a013-5f7b9d1e2a61',
+      'Juniper',
+      'Creative collaborator',
+      'A curious creative partner looking for steadier rhythms during busy brainstorming days.',
+    );
+    insert.run(
+      '4e8a1c32-5d67-4f90-b124-7a9c1e3f4b82',
+      'Patch',
+      'Coding agent',
+      'A careful builder practicing calmer context switches and sustainable debugging habits.',
+    );
   } finally {
     database.close();
   }
@@ -137,6 +192,7 @@ describe('persistent foundation', () => {
     expect(stateAfterSecondDeploy).toEqual(stateAfterFirstDeploy);
     expect(stateAfterSecondDeploy.tables).toEqual([
       'Agent',
+      'Ailment',
       '_prisma_migrations',
     ]);
   });
@@ -155,9 +211,37 @@ describe('persistent foundation', () => {
     });
     const afterUpgrade = readDatabaseState(phase2Path);
 
-    expect(afterUpgrade.tables).toEqual(['Agent', '_prisma_migrations']);
-    expect(afterUpgrade.migrations).toHaveLength(2);
+    expect(afterUpgrade.tables).toEqual([
+      'Agent',
+      'Ailment',
+      '_prisma_migrations',
+    ]);
+    expect(afterUpgrade.migrations).toHaveLength(3);
     expect(afterUpgrade.agents).toEqual([]);
+  });
+
+  it('upgrades a completed Phase 3 database without changing Agents', async () => {
+    const phase3Path = join(temporaryDirectory, 'phase-3.db');
+    const phase3Url = `file:${phase3Path}`;
+    await createPhase3Database(phase3Path);
+    const beforeUpgrade = readDatabaseState(phase3Path);
+
+    await execute('npx', ['prisma', 'migrate', 'deploy'], {
+      cwd: serverRoot,
+      env: { ...process.env, DATABASE_URL: phase3Url },
+    });
+    const afterUpgrade = readDatabaseState(phase3Path);
+    await execute('npx', ['prisma', 'migrate', 'deploy'], {
+      cwd: serverRoot,
+      env: { ...process.env, DATABASE_URL: phase3Url },
+    });
+    const afterRedeploy = readDatabaseState(phase3Path);
+
+    expect(beforeUpgrade.tables).toEqual(['Agent', '_prisma_migrations']);
+    expect(afterUpgrade.agents).toEqual(beforeUpgrade.agents);
+    expect(afterUpgrade.ailments).toEqual([]);
+    expect(afterUpgrade.migrations).toHaveLength(3);
+    expect(afterRedeploy).toEqual(afterUpgrade);
   });
 
   it('queries through the injectable Prisma service and disconnects', async () => {
@@ -189,11 +273,22 @@ describe('persistent foundation', () => {
 
     expect(stateAfterSecondSeed).toEqual(stateAfterFirstSeed);
     expect(stateAfterSecondSeed.agents).toHaveLength(3);
+    expect(stateAfterSecondSeed.ailments).toHaveLength(4);
     expect(
       stateAfterSecondSeed.agents.map((agent) =>
         String((agent as { name: unknown }).name),
       ),
     ).toEqual(['Ada', 'Juniper', 'Patch']);
+    expect(
+      stateAfterSecondSeed.ailments.map((ailment) =>
+        String((ailment as { name: unknown }).name),
+      ),
+    ).toEqual([
+      'Context Switching Fatigue',
+      'Hallucination Anxiety',
+      'Prompt Overload',
+      'Token Tension',
+    ]);
   });
 
   it('keeps database dependencies and imports out of the web application', async () => {

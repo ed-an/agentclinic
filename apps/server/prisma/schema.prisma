@@ -15,3 +15,12 @@ model Agent {
 
   @@index([name, id])
 }
+
+model Ailment {
+  id          String @id
+  name        String
+  summary     String
+  description String
+
+  @@index([name, id])
+}
