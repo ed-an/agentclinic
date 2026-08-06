@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -14,6 +15,7 @@ const serverRoot = resolve(__dirname, '..');
 const repositoryRoot = resolve(serverRoot, '../..');
 
 interface DatabaseState {
+  agents: unknown[];
   migrations: unknown[];
   tables: string[];
 }
@@ -32,7 +34,50 @@ function readDatabaseState(databasePath: string): DatabaseState {
         'SELECT migration_name, checksum, finished_at, rolled_back_at FROM _prisma_migrations ORDER BY migration_name',
       )
       .all();
-    return { migrations, tables };
+    const agents = tables.includes('Agent')
+      ? database
+          .prepare(
+            'SELECT id, name, model, summary FROM Agent ORDER BY name, id',
+          )
+          .all()
+      : [];
+    return { agents, migrations, tables };
+  } finally {
+    database.close();
+  }
+}
+
+async function createPhase2Database(databasePath: string): Promise<void> {
+  const baselinePath = join(
+    serverRoot,
+    'prisma/migrations/20260806160000_persistent_foundation/migration.sql',
+  );
+  const baseline = await readFile(baselinePath, 'utf8');
+  const database = new DatabaseSync(databasePath);
+  try {
+    database.exec(`
+      CREATE TABLE "_prisma_migrations" (
+        "id" VARCHAR(36) PRIMARY KEY NOT NULL,
+        "checksum" VARCHAR(64) NOT NULL,
+        "finished_at" DATETIME,
+        "migration_name" VARCHAR(255) NOT NULL,
+        "logs" TEXT,
+        "rolled_back_at" DATETIME,
+        "started_at" DATETIME NOT NULL DEFAULT current_timestamp,
+        "applied_steps_count" INTEGER UNSIGNED NOT NULL DEFAULT 0
+      );
+    `);
+    database
+      .prepare(
+        `INSERT INTO _prisma_migrations
+          (id, checksum, finished_at, migration_name, applied_steps_count)
+         VALUES (?, ?, current_timestamp, ?, 1)`,
+      )
+      .run(
+        randomUUID(),
+        createHash('sha256').update(baseline).digest('hex'),
+        '20260806160000_persistent_foundation',
+      );
   } finally {
     database.close();
   }
@@ -76,7 +121,7 @@ describe('persistent foundation', () => {
     await rm(temporaryDirectory, { recursive: true, force: true });
   });
 
-  it('applies the baseline migration and safely reapplies it', async () => {
+  it('migrates a clean database and safely reapplies migrations', async () => {
     const environment = { ...process.env, DATABASE_URL: databaseUrl };
     await execute('npx', ['prisma', 'migrate', 'deploy'], {
       cwd: serverRoot,
@@ -90,7 +135,29 @@ describe('persistent foundation', () => {
     const stateAfterSecondDeploy = readDatabaseState(databasePath);
 
     expect(stateAfterSecondDeploy).toEqual(stateAfterFirstDeploy);
-    expect(stateAfterSecondDeploy.tables).toEqual(['_prisma_migrations']);
+    expect(stateAfterSecondDeploy.tables).toEqual([
+      'Agent',
+      '_prisma_migrations',
+    ]);
+  });
+
+  it('upgrades an existing Phase 2 database', async () => {
+    const phase2Path = join(temporaryDirectory, 'phase-2.db');
+    const phase2Url = `file:${phase2Path}`;
+    await createPhase2Database(phase2Path);
+
+    const beforeUpgrade = readDatabaseState(phase2Path);
+    expect(beforeUpgrade.tables).toEqual(['_prisma_migrations']);
+
+    await execute('npx', ['prisma', 'migrate', 'deploy'], {
+      cwd: serverRoot,
+      env: { ...process.env, DATABASE_URL: phase2Url },
+    });
+    const afterUpgrade = readDatabaseState(phase2Path);
+
+    expect(afterUpgrade.tables).toEqual(['Agent', '_prisma_migrations']);
+    expect(afterUpgrade.migrations).toHaveLength(2);
+    expect(afterUpgrade.agents).toEqual([]);
   });
 
   it('queries through the injectable Prisma service and disconnects', async () => {
@@ -121,6 +188,12 @@ describe('persistent foundation', () => {
     const stateAfterSecondSeed = readDatabaseState(databasePath);
 
     expect(stateAfterSecondSeed).toEqual(stateAfterFirstSeed);
+    expect(stateAfterSecondSeed.agents).toHaveLength(3);
+    expect(
+      stateAfterSecondSeed.agents.map((agent) =>
+        String((agent as { name: unknown }).name),
+      ),
+    ).toEqual(['Ada', 'Juniper', 'Patch']);
   });
 
   it('keeps database dependencies and imports out of the web application', async () => {

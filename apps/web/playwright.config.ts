@@ -14,10 +14,18 @@ export default defineConfig({
     trace: 'retain-on-failure',
     ...devices['Desktop Chrome'],
   },
-  webServer: {
-    command: `npm run start -- -p ${port}`,
-    url: `http://127.0.0.1:${port}`,
-    reuseExistingServer: false,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: 'node ../../scripts/browser-server.mjs',
+      url: 'http://127.0.0.1:3201/health',
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+    {
+      command: `AGENTCLINIC_API_URL=http://127.0.0.1:3201 npm run start -- -p ${port}`,
+      url: `http://127.0.0.1:${port}`,
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+  ],
 });

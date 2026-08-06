@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit --incremental false",
     "test": "vitest run",
+    "pretest:browser": "npm run build --workspace @agentclinic/server",
     "test:browser": "npm run build && playwright test"
   },
   "dependencies": {

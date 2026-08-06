@@ -33,9 +33,9 @@ You can also run one application with `npm run dev:server` or
 - Web home: <http://localhost:3000>
 - Server health: <http://localhost:3001/health>
 
-The clinic shell links to placeholder areas at `/agents`, `/ailments`,
-`/therapies`, `/appointments`, and `/staff`. These routes establish accessible
-navigation without introducing their later-phase domain behavior.
+The clinic shell includes a read-only Agent directory at `/agents`. A seeded
+Agent has a separate profile page. The `/ailments`, `/therapies`,
+`/appointments`, and `/staff` routes remain placeholders for later phases.
 
 Override the server port with `PORT`, for example `PORT=4001 npm run
 dev:server`. Next.js accepts its standard `-p` option after `--` when running
@@ -60,10 +60,17 @@ the repository. When intentionally changing the schema in a future phase, use
 `npm run db:migrate:dev -- --name descriptive_migration_name` to create and
 apply a migration for review.
 
-The Phase 2 baseline deliberately contains no domain tables, and its seed
-command verifies connectivity without inserting placeholder records. Phase 3
-will add the Agent model and deterministic Agent records. The seed can safely
-be run repeatedly and reports when the persistent foundation is ready.
+The Phase 2 baseline deliberately contains no domain tables. Phase 3 adds the
+minimal Agent model and three deterministic fictional Agent records. The seed
+uses stable identifiers and repeat-safe writes, so it can safely be run more
+than once without creating duplicates.
+
+The server API exposes the read-only directory at
+<http://localhost:3001/agents> and individual profiles at
+`http://localhost:3001/agents/:id`. Server-rendered web pages use
+`AGENTCLINIC_API_URL` when set and otherwise connect to
+`http://127.0.0.1:3001`; this variable is server-only and must not use a
+`NEXT_PUBLIC_` prefix.
 
 To reset only the database selected by `DATABASE_URL`, run:
 

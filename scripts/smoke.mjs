@@ -86,6 +86,11 @@ try {
     (body) => body === '{"status":"ok"}',
     'Server health smoke check',
   );
+  await probe(
+    `http://127.0.0.1:${serverPort}/agents`,
+    (body) => body.includes('"name":"Ada"') && body.includes('"name":"Patch"'),
+    'Agent API smoke check',
+  );
 
   start(
     'npm',
@@ -98,7 +103,7 @@ try {
       '-p',
       String(webPort),
     ],
-    {},
+    { AGENTCLINIC_API_URL: `http://127.0.0.1:${serverPort}` },
   );
   await probe(
     `http://127.0.0.1:${webPort}/`,
@@ -106,6 +111,12 @@ try {
       body.includes('AgentClinic') &&
       body.includes('seek relief from the demands of'),
     'Web home smoke check',
+  );
+  await probe(
+    `http://127.0.0.1:${webPort}/agents`,
+    (body) =>
+      body.includes('Reasoning assistant') && body.includes('Coding agent'),
+    'Agent directory smoke check',
   );
 } finally {
   stopChildren();
