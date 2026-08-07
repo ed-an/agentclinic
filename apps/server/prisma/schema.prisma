@@ -27,11 +27,24 @@ model Ailment {
 }
 
 model Therapy {
-  id          String @id
-  name        String @unique
-  summary     String
-  description String
-  ailments    Ailment[]
+  id                String             @id
+  name              String             @unique
+  summary           String
+  description       String
+  ailments          Ailment[]
+  availabilitySlots AvailabilitySlot[]
 
   @@index([name, id])
+}
+
+model AvailabilitySlot {
+  id              String   @id
+  therapyId       String
+  startsAt        DateTime
+  durationMinutes Int
+  isAvailable     Boolean
+  therapy         Therapy  @relation(fields: [therapyId], references: [id], onDelete: Cascade)
+
+  @@unique([therapyId, startsAt])
+  @@index([therapyId, isAvailable, startsAt, id])
 }

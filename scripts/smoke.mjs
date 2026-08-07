@@ -10,6 +10,7 @@ const children = [];
 const canSignalProcessGroups = process.platform !== 'win32';
 const databaseDirectory = mkdtempSync(join(tmpdir(), 'agentclinic-smoke-'));
 const databaseUrl = `file:${join(databaseDirectory, 'smoke.db')}`;
+const contextGardenWalkId = '1d7f3a90-2b64-4c18-8e52-6a9d0f3b7c41';
 
 function start(command, args, env) {
   const child = spawn(command, args, {
@@ -98,6 +99,14 @@ try {
       !body.includes('Prompt Overload'),
     'Ailment search API smoke check',
   );
+  await probe(
+    `http://127.0.0.1:${serverPort}/therapies/${contextGardenWalkId}/availability`,
+    (body) =>
+      body.includes('2035-06-15T02:30:00.000Z') &&
+      body.includes('"durationMinutes":45') &&
+      !body.includes('isAvailable'),
+    'Therapy availability API smoke check',
+  );
 
   start(
     'npm',
@@ -129,6 +138,14 @@ try {
     `http://127.0.0.1:${webPort}/ailments?q=overload`,
     (body) => body.includes('Results for') && body.includes('Prompt Overload'),
     'Ailment catalog smoke check',
+  );
+  await probe(
+    `http://127.0.0.1:${webPort}/therapies/${contextGardenWalkId}`,
+    (body) =>
+      body.includes('Upcoming availability') &&
+      body.includes('America/Sao_Paulo') &&
+      body.includes('45 minutes'),
+    'Therapy availability page smoke check',
   );
 } finally {
   stopChildren();

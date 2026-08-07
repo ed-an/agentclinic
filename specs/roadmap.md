@@ -63,6 +63,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 6 — Appointment availability
 
+**Status:** Complete
+
 - Define clinic appointment slots and availability rules.
 - Show available times for one therapy without allowing booking yet.
 
