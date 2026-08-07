@@ -5,9 +5,24 @@ export type Ailment = Readonly<{
   description: string;
 }>;
 
+export type AssociatedTherapy = Readonly<{
+  id: string;
+  name: string;
+  summary: string;
+  description: string;
+}>;
+
 const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://127.0.0.1:3001';
 
 function isAilment(value: unknown): value is Ailment {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  return ['id', 'name', 'summary', 'description'].every(
+    (field) => typeof candidate[field] === 'string',
+  );
+}
+
+function isAssociatedTherapy(value: unknown): value is AssociatedTherapy {
   if (typeof value !== 'object' || value === null) return false;
   const candidate = value as Record<string, unknown>;
   return ['id', 'name', 'summary', 'description'].every(
@@ -44,6 +59,23 @@ export async function getAilment(id: string): Promise<Ailment | null> {
   const body: unknown = await response.json();
   if (!isAilment(body)) {
     throw new Error('The ailment details returned an invalid response');
+  }
+  return body;
+}
+
+export async function getAilmentTherapies(
+  id: string,
+): Promise<AssociatedTherapy[]> {
+  const response = await request(
+    `/ailments/${encodeURIComponent(id)}/therapies`,
+  );
+  if (!response.ok) {
+    throw new Error('Unable to load therapies related to this ailment');
+  }
+
+  const body: unknown = await response.json();
+  if (!Array.isArray(body) || !body.every(isAssociatedTherapy)) {
+    throw new Error('The related therapies returned an invalid response');
   }
   return body;
 }

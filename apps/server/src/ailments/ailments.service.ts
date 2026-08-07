@@ -1,6 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { AilmentResponseDto } from './dto/ailment-response.dto';
+import { TherapyResponseDto } from '../therapies/dto/therapy-response.dto';
+import { therapyFields } from '../therapies/therapies.service';
 
 const ailmentFields = {
   id: true,
@@ -41,5 +43,21 @@ export class AilmentsService {
     if (!ailment) throw new NotFoundException('Ailment not found');
 
     return new AilmentResponseDto(ailment);
+  }
+
+  async findTherapies(id: string): Promise<TherapyResponseDto[]> {
+    const ailment = await this.prisma.ailment.findUnique({
+      where: { id },
+      select: {
+        therapies: {
+          orderBy: [{ name: 'asc' }, { id: 'asc' }],
+          select: therapyFields,
+        },
+      },
+    });
+
+    if (!ailment) throw new NotFoundException('Ailment not found');
+
+    return ailment.therapies.map((therapy) => new TherapyResponseDto(therapy));
   }
 }

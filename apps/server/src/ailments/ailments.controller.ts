@@ -9,6 +9,7 @@ import {
 import { AilmentsService } from './ailments.service';
 import { AilmentResponseDto } from './dto/ailment-response.dto';
 import { AilmentSearchQueryPipe } from './pipes/ailment-search-query.pipe';
+import { TherapyResponseDto } from '../therapies/dto/therapy-response.dto';
 
 @Controller('ailments')
 export class AilmentsController {
@@ -28,5 +29,12 @@ export class AilmentsController {
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<AilmentResponseDto> {
     return this.ailmentsService.findOne(id);
+  }
+
+  @Get(':id/therapies')
+  findTherapies(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Promise<TherapyResponseDto[]> {
+    return this.ailmentsService.findTherapies(id);
   }
 }

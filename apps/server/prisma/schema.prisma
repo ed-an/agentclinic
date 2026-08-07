@@ -21,6 +21,17 @@ model Ailment {
   name        String
   summary     String
   description String
+  therapies   Therapy[]
+
+  @@index([name, id])
+}
+
+model Therapy {
+  id          String @id
+  name        String @unique
+  summary     String
+  description String
+  ailments    Ailment[]
 
   @@index([name, id])
 }
