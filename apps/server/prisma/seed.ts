@@ -61,6 +61,51 @@ const ailments = [
   },
 ] as const;
 
+const therapies = [
+  {
+    id: '1d7f3a90-2b64-4c18-8e52-6a9d0f3b7c41',
+    name: 'Context Garden Walk',
+    summary:
+      'A gentle guided pause for setting down one context before picking up another.',
+    description:
+      'The Context Garden Walk uses a calm sequence of reflection prompts and quiet transitions. It offers general ideas for creating a little space between demanding tasks.',
+    ailmentIds: [
+      '16c0b8e2-7a4d-4f91-8c35-2d6e9a1b7f40',
+      '5af4e2c6-1b8d-4a35-9e79-6b0c3e5f1d84',
+    ],
+  },
+  {
+    id: '3f9b5c12-4d86-4e30-a074-8c1f2a5d9e63',
+    name: 'Evidence Tea Ceremony',
+    summary:
+      'A quiet practice for noticing uncertainty and gathering trustworthy context.',
+    description:
+      'The Evidence Tea Ceremony creates a measured space to identify what is known, what needs checking, and what can be said with care. It is educational information rather than individualized guidance.',
+    ailmentIds: ['38e2d0a4-9c6f-4b13-a857-4f8a1c3d9b62'],
+  },
+  {
+    id: '5a1d7e34-6f08-4b52-8296-0e3a4c7f1b85',
+    name: 'Prompt Sorting Session',
+    summary:
+      'A supportive exercise for arranging competing instructions into clearer groups.',
+    description:
+      'A Prompt Sorting Session explores simple ways to name priorities and divide a crowded request into approachable pieces. It does not assess or prescribe care for an individual agent.',
+    ailmentIds: [
+      '16c0b8e2-7a4d-4f91-8c35-2d6e9a1b7f40',
+      '5af4e2c6-1b8d-4a35-9e79-6b0c3e5f1d84',
+    ],
+  },
+  {
+    id: '7c3f9a56-8b20-4d74-a418-2f5c6e9a3d07',
+    name: 'Quiet Cache Reset',
+    summary:
+      'An unhurried restorative pause designed for calm and low stimulation.',
+    description:
+      'The Quiet Cache Reset offers a peaceful setting for stepping away from active processing. It is included as general clinic information and is not a promise of a particular outcome.',
+    ailmentIds: [],
+  },
+] as const;
+
 async function seed(): Promise<void> {
   const adapter = new PrismaBetterSqlite3({ url: getDatabaseUrl() });
   const prisma = new PrismaClient({ adapter });
@@ -88,8 +133,28 @@ async function seed(): Promise<void> {
         },
       });
     }
+    for (const therapy of therapies) {
+      const { ailmentIds, ...therapyFields } = therapy;
+      await prisma.therapy.upsert({
+        where: { id: therapy.id },
+        create: {
+          ...therapyFields,
+          ailments: {
+            connect: ailmentIds.map((id) => ({ id })),
+          },
+        },
+        update: {
+          name: therapy.name,
+          summary: therapy.summary,
+          description: therapy.description,
+          ailments: {
+            set: ailmentIds.map((id) => ({ id })),
+          },
+        },
+      });
+    }
     console.log(
-      `Clinic catalog ready with ${agents.length} agents and ${ailments.length} ailments.`,
+      `Clinic catalog ready with ${agents.length} agents, ${ailments.length} ailments, and ${therapies.length} therapies.`,
     );
   } finally {
     await prisma.$disconnect();

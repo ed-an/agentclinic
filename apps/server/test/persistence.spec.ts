@@ -17,6 +17,8 @@ const repositoryRoot = resolve(serverRoot, '../..');
 interface DatabaseState {
   agents: unknown[];
   ailments: unknown[];
+  therapies: unknown[];
+  associations: unknown[];
   migrations: unknown[];
   tables: string[];
 }
@@ -49,7 +51,21 @@ function readDatabaseState(databasePath: string): DatabaseState {
           )
           .all()
       : [];
-    return { agents, ailments, migrations, tables };
+    const therapies = tables.includes('Therapy')
+      ? database
+          .prepare(
+            'SELECT id, name, summary, description FROM Therapy ORDER BY name, id',
+          )
+          .all()
+      : [];
+    const associations = tables.includes('_AilmentToTherapy')
+      ? database
+          .prepare(
+            'SELECT A AS ailmentId, B AS therapyId FROM _AilmentToTherapy ORDER BY A, B',
+          )
+          .all()
+      : [];
+    return { agents, ailments, therapies, associations, migrations, tables };
   } finally {
     database.close();
   }
@@ -138,6 +154,42 @@ async function createPhase2Database(databasePath: string): Promise<void> {
   }
 }
 
+async function createPhase4Database(databasePath: string): Promise<void> {
+  await createPhase3Database(databasePath);
+  const migrationName = '20260806200000_ailment_catalog';
+  const migration = await readFile(
+    join(serverRoot, `prisma/migrations/${migrationName}/migration.sql`),
+    'utf8',
+  );
+  const database = new DatabaseSync(databasePath);
+  try {
+    database.exec(migration);
+    database
+      .prepare(
+        `INSERT INTO _prisma_migrations
+          (id, checksum, finished_at, migration_name, applied_steps_count)
+         VALUES (?, ?, current_timestamp, ?, 1)`,
+      )
+      .run(
+        randomUUID(),
+        createHash('sha256').update(migration).digest('hex'),
+        migrationName,
+      );
+    database
+      .prepare(
+        'INSERT INTO Ailment (id, name, summary, description) VALUES (?, ?, ?, ?)',
+      )
+      .run(
+        '16c0b8e2-7a4d-4f91-8c35-2d6e9a1b7f40',
+        'Context Switching Fatigue',
+        'Mental drag that can appear after moving rapidly between unrelated tasks.',
+        'Existing Phase 4 content that must survive the upgrade.',
+      );
+  } finally {
+    database.close();
+  }
+}
+
 async function listSourceFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = await Promise.all(
@@ -193,6 +245,8 @@ describe('persistent foundation', () => {
     expect(stateAfterSecondDeploy.tables).toEqual([
       'Agent',
       'Ailment',
+      'Therapy',
+      '_AilmentToTherapy',
       '_prisma_migrations',
     ]);
   });
@@ -214,9 +268,11 @@ describe('persistent foundation', () => {
     expect(afterUpgrade.tables).toEqual([
       'Agent',
       'Ailment',
+      'Therapy',
+      '_AilmentToTherapy',
       '_prisma_migrations',
     ]);
-    expect(afterUpgrade.migrations).toHaveLength(3);
+    expect(afterUpgrade.migrations).toHaveLength(4);
     expect(afterUpgrade.agents).toEqual([]);
   });
 
@@ -240,7 +296,32 @@ describe('persistent foundation', () => {
     expect(beforeUpgrade.tables).toEqual(['Agent', '_prisma_migrations']);
     expect(afterUpgrade.agents).toEqual(beforeUpgrade.agents);
     expect(afterUpgrade.ailments).toEqual([]);
-    expect(afterUpgrade.migrations).toHaveLength(3);
+    expect(afterUpgrade.migrations).toHaveLength(4);
+    expect(afterRedeploy).toEqual(afterUpgrade);
+  });
+
+  it('upgrades a completed Phase 4 database without changing Agents or Ailments', async () => {
+    const phase4Path = join(temporaryDirectory, 'phase-4.db');
+    const phase4Url = `file:${phase4Path}`;
+    await createPhase4Database(phase4Path);
+    const beforeUpgrade = readDatabaseState(phase4Path);
+
+    await execute('npx', ['prisma', 'migrate', 'deploy'], {
+      cwd: serverRoot,
+      env: { ...process.env, DATABASE_URL: phase4Url },
+    });
+    const afterUpgrade = readDatabaseState(phase4Path);
+    await execute('npx', ['prisma', 'migrate', 'deploy'], {
+      cwd: serverRoot,
+      env: { ...process.env, DATABASE_URL: phase4Url },
+    });
+    const afterRedeploy = readDatabaseState(phase4Path);
+
+    expect(afterUpgrade.agents).toEqual(beforeUpgrade.agents);
+    expect(afterUpgrade.ailments).toEqual(beforeUpgrade.ailments);
+    expect(afterUpgrade.therapies).toEqual([]);
+    expect(afterUpgrade.associations).toEqual([]);
+    expect(afterUpgrade.migrations).toHaveLength(4);
     expect(afterRedeploy).toEqual(afterUpgrade);
   });
 
@@ -274,6 +355,8 @@ describe('persistent foundation', () => {
     expect(stateAfterSecondSeed).toEqual(stateAfterFirstSeed);
     expect(stateAfterSecondSeed.agents).toHaveLength(3);
     expect(stateAfterSecondSeed.ailments).toHaveLength(4);
+    expect(stateAfterSecondSeed.therapies).toHaveLength(4);
+    expect(stateAfterSecondSeed.associations).toHaveLength(5);
     expect(
       stateAfterSecondSeed.agents.map((agent) =>
         String((agent as { name: unknown }).name),
@@ -288,6 +371,16 @@ describe('persistent foundation', () => {
       'Hallucination Anxiety',
       'Prompt Overload',
       'Token Tension',
+    ]);
+    expect(
+      stateAfterSecondSeed.therapies.map((therapy) =>
+        String((therapy as { name: unknown }).name),
+      ),
+    ).toEqual([
+      'Context Garden Walk',
+      'Evidence Tea Ceremony',
+      'Prompt Sorting Session',
+      'Quiet Cache Reset',
     ]);
   });
 

@@ -54,6 +54,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 5 — Therapy catalog
 
+**Status:** Complete
+
 - Add the Therapy model and its relationship to ailments.
 - Expose therapies recommended for an ailment and show them in the web application.
 
