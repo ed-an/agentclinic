@@ -106,6 +106,53 @@ const therapies = [
   },
 ] as const;
 
+// Fixed 2035 UTC fixtures keep course and booth demos reproducible. Tests use
+// a controlled 2035-06-01 clock when classifying past and upcoming records.
+const availabilitySlots = [
+  {
+    id: '8d4a1b68-9c32-4e86-b520-3a6d7f0c4e18',
+    therapyId: '1d7f3a90-2b64-4c18-8e52-6a9d0f3b7c41',
+    startsAt: new Date('2035-06-15T02:30:00.000Z'),
+    durationMinutes: 45,
+    isAvailable: true,
+  },
+  {
+    id: '9e5b2c70-ad43-4f98-8612-4b7e8a1d5f29',
+    therapyId: '1d7f3a90-2b64-4c18-8e52-6a9d0f3b7c41',
+    startsAt: new Date('2035-06-15T03:30:00.000Z'),
+    durationMinutes: 45,
+    isAvailable: true,
+  },
+  {
+    id: 'af6c3d82-be54-40a1-9724-5c8f9b2e6a30',
+    therapyId: '1d7f3a90-2b64-4c18-8e52-6a9d0f3b7c41',
+    startsAt: new Date('2035-06-16T14:00:00.000Z'),
+    durationMinutes: 60,
+    isAvailable: false,
+  },
+  {
+    id: 'b07d4e94-cf65-41b3-a836-6d9a0c3f7b41',
+    therapyId: '3f9b5c12-4d86-4e30-a074-8c1f2a5d9e63',
+    startsAt: new Date('2035-05-20T15:00:00.000Z'),
+    durationMinutes: 30,
+    isAvailable: true,
+  },
+  {
+    id: 'c18e5fa6-d076-42c5-b948-7e0b1d4a8c52',
+    therapyId: '3f9b5c12-4d86-4e30-a074-8c1f2a5d9e63',
+    startsAt: new Date('2035-06-20T15:00:00.000Z'),
+    durationMinutes: 30,
+    isAvailable: false,
+  },
+  {
+    id: 'd29f60b8-e187-43d7-8a50-8f1c2e5b9d63',
+    therapyId: '5a1d7e34-6f08-4b52-8296-0e3a4c7f1b85',
+    startsAt: new Date('2035-07-01T13:00:00.000Z'),
+    durationMinutes: 50,
+    isAvailable: true,
+  },
+] as const;
+
 async function seed(): Promise<void> {
   const adapter = new PrismaBetterSqlite3({ url: getDatabaseUrl() });
   const prisma = new PrismaClient({ adapter });
@@ -153,8 +200,20 @@ async function seed(): Promise<void> {
         },
       });
     }
+    for (const slot of availabilitySlots) {
+      await prisma.availabilitySlot.upsert({
+        where: { id: slot.id },
+        create: slot,
+        update: {
+          therapyId: slot.therapyId,
+          startsAt: slot.startsAt,
+          durationMinutes: slot.durationMinutes,
+          isAvailable: slot.isAvailable,
+        },
+      });
+    }
     console.log(
-      `Clinic catalog ready with ${agents.length} agents, ${ailments.length} ailments, and ${therapies.length} therapies.`,
+      `Clinic catalog ready with ${agents.length} agents, ${ailments.length} ailments, ${therapies.length} therapies, and ${availabilitySlots.length} availability slots.`,
     );
   } finally {
     await prisma.$disconnect();

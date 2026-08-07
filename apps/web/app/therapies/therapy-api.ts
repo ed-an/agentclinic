@@ -15,6 +15,14 @@ export type TherapyDetail = Therapy &
     ailments: AssociatedAilment[];
   }>;
 
+export type AvailabilitySlot = Readonly<{
+  id: string;
+  therapyId: string;
+  startsAt: string;
+  durationMinutes: number;
+  endsAt: string;
+}>;
+
 const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://127.0.0.1:3001';
 
 function isTherapy(value: unknown): value is Therapy {
@@ -35,6 +43,19 @@ function isTherapyDetail(value: unknown): value is TherapyDetail {
   if (!isTherapy(value)) return false;
   const ailments = (value as Record<string, unknown>).ailments;
   return Array.isArray(ailments) && ailments.every(isAssociatedAilment);
+}
+
+function isAvailabilitySlot(value: unknown): value is AvailabilitySlot {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.therapyId === 'string' &&
+    typeof candidate.startsAt === 'string' &&
+    typeof candidate.durationMinutes === 'number' &&
+    candidate.durationMinutes > 0 &&
+    typeof candidate.endsAt === 'string'
+  );
 }
 
 async function request(path: string): Promise<Response> {
@@ -63,6 +84,21 @@ export async function getTherapy(id: string): Promise<TherapyDetail | null> {
   const body: unknown = await response.json();
   if (!isTherapyDetail(body)) {
     throw new Error('The therapy details returned an invalid response');
+  }
+  return body;
+}
+
+export async function getTherapyAvailability(
+  id: string,
+): Promise<AvailabilitySlot[]> {
+  const response = await request(
+    `/therapies/${encodeURIComponent(id)}/availability`,
+  );
+  if (!response.ok) throw new Error('Unable to load therapy availability');
+
+  const body: unknown = await response.json();
+  if (!Array.isArray(body) || !body.every(isAvailabilitySlot)) {
+    throw new Error('Therapy availability returned an invalid response');
   }
   return body;
 }

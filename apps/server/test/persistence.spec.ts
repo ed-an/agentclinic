@@ -19,6 +19,7 @@ interface DatabaseState {
   ailments: unknown[];
   therapies: unknown[];
   associations: unknown[];
+  availabilitySlots: unknown[];
   migrations: unknown[];
   tables: string[];
 }
@@ -65,7 +66,22 @@ function readDatabaseState(databasePath: string): DatabaseState {
           )
           .all()
       : [];
-    return { agents, ailments, therapies, associations, migrations, tables };
+    const availabilitySlots = tables.includes('AvailabilitySlot')
+      ? database
+          .prepare(
+            'SELECT id, therapyId, startsAt, durationMinutes, isAvailable FROM AvailabilitySlot ORDER BY startsAt, id',
+          )
+          .all()
+      : [];
+    return {
+      agents,
+      ailments,
+      therapies,
+      associations,
+      availabilitySlots,
+      migrations,
+      tables,
+    };
   } finally {
     database.close();
   }
@@ -190,6 +206,48 @@ async function createPhase4Database(databasePath: string): Promise<void> {
   }
 }
 
+async function createPhase5Database(databasePath: string): Promise<void> {
+  await createPhase4Database(databasePath);
+  const migrationName = '20260807120000_therapy_catalog';
+  const migration = await readFile(
+    join(serverRoot, `prisma/migrations/${migrationName}/migration.sql`),
+    'utf8',
+  );
+  const database = new DatabaseSync(databasePath);
+  try {
+    database.exec(migration);
+    database
+      .prepare(
+        `INSERT INTO _prisma_migrations
+          (id, checksum, finished_at, migration_name, applied_steps_count)
+         VALUES (?, ?, current_timestamp, ?, 1)`,
+      )
+      .run(
+        randomUUID(),
+        createHash('sha256').update(migration).digest('hex'),
+        migrationName,
+      );
+    database
+      .prepare(
+        'INSERT INTO Therapy (id, name, summary, description) VALUES (?, ?, ?, ?)',
+      )
+      .run(
+        '1d7f3a90-2b64-4c18-8e52-6a9d0f3b7c41',
+        'Context Garden Walk',
+        'Existing Phase 5 summary.',
+        'Existing Phase 5 content that must survive the upgrade.',
+      );
+    database
+      .prepare('INSERT INTO _AilmentToTherapy (A, B) VALUES (?, ?)')
+      .run(
+        '16c0b8e2-7a4d-4f91-8c35-2d6e9a1b7f40',
+        '1d7f3a90-2b64-4c18-8e52-6a9d0f3b7c41',
+      );
+  } finally {
+    database.close();
+  }
+}
+
 async function listSourceFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = await Promise.all(
@@ -245,11 +303,12 @@ describe('persistent foundation', () => {
     expect(stateAfterSecondDeploy.tables).toEqual([
       'Agent',
       'Ailment',
+      'AvailabilitySlot',
       'Therapy',
       '_AilmentToTherapy',
       '_prisma_migrations',
     ]);
-  });
+  }, 15_000);
 
   it('upgrades an existing Phase 2 database', async () => {
     const phase2Path = join(temporaryDirectory, 'phase-2.db');
@@ -268,13 +327,14 @@ describe('persistent foundation', () => {
     expect(afterUpgrade.tables).toEqual([
       'Agent',
       'Ailment',
+      'AvailabilitySlot',
       'Therapy',
       '_AilmentToTherapy',
       '_prisma_migrations',
     ]);
-    expect(afterUpgrade.migrations).toHaveLength(4);
+    expect(afterUpgrade.migrations).toHaveLength(5);
     expect(afterUpgrade.agents).toEqual([]);
-  });
+  }, 15_000);
 
   it('upgrades a completed Phase 3 database without changing Agents', async () => {
     const phase3Path = join(temporaryDirectory, 'phase-3.db');
@@ -296,9 +356,9 @@ describe('persistent foundation', () => {
     expect(beforeUpgrade.tables).toEqual(['Agent', '_prisma_migrations']);
     expect(afterUpgrade.agents).toEqual(beforeUpgrade.agents);
     expect(afterUpgrade.ailments).toEqual([]);
-    expect(afterUpgrade.migrations).toHaveLength(4);
+    expect(afterUpgrade.migrations).toHaveLength(5);
     expect(afterRedeploy).toEqual(afterUpgrade);
-  });
+  }, 15_000);
 
   it('upgrades a completed Phase 4 database without changing Agents or Ailments', async () => {
     const phase4Path = join(temporaryDirectory, 'phase-4.db');
@@ -321,8 +381,108 @@ describe('persistent foundation', () => {
     expect(afterUpgrade.ailments).toEqual(beforeUpgrade.ailments);
     expect(afterUpgrade.therapies).toEqual([]);
     expect(afterUpgrade.associations).toEqual([]);
-    expect(afterUpgrade.migrations).toHaveLength(4);
+    expect(afterUpgrade.migrations).toHaveLength(5);
     expect(afterRedeploy).toEqual(afterUpgrade);
+  }, 15_000);
+
+  it('upgrades a completed Phase 5 database without changing prior records', async () => {
+    const phase5Path = join(temporaryDirectory, 'phase-5.db');
+    const phase5Url = `file:${phase5Path}`;
+    await createPhase5Database(phase5Path);
+    const beforeUpgrade = readDatabaseState(phase5Path);
+
+    await execute('npx', ['prisma', 'migrate', 'deploy'], {
+      cwd: serverRoot,
+      env: { ...process.env, DATABASE_URL: phase5Url },
+    });
+    const afterUpgrade = readDatabaseState(phase5Path);
+    await execute('npx', ['prisma', 'migrate', 'deploy'], {
+      cwd: serverRoot,
+      env: { ...process.env, DATABASE_URL: phase5Url },
+    });
+    const afterRedeploy = readDatabaseState(phase5Path);
+
+    expect(afterUpgrade.agents).toEqual(beforeUpgrade.agents);
+    expect(afterUpgrade.ailments).toEqual(beforeUpgrade.ailments);
+    expect(afterUpgrade.therapies).toEqual(beforeUpgrade.therapies);
+    expect(afterUpgrade.associations).toEqual(beforeUpgrade.associations);
+    expect(afterUpgrade.availabilitySlots).toEqual([]);
+    expect(afterUpgrade.migrations).toHaveLength(5);
+    expect(afterRedeploy).toEqual(afterUpgrade);
+  }, 15_000);
+
+  it('enforces slot foreign keys, uniqueness, positive duration, and approved indexes', () => {
+    const database = new DatabaseSync(databasePath);
+    const therapyId = '1d7f3a90-2b64-4c18-8e52-6a9d0f3b7c41';
+    try {
+      database.exec('PRAGMA foreign_keys = ON');
+      const indexes = database
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'AvailabilitySlot' ORDER BY name",
+        )
+        .all()
+        .map(({ name }) => String(name));
+      expect(indexes).toEqual([
+        'AvailabilitySlot_therapyId_isAvailable_startsAt_id_idx',
+        'AvailabilitySlot_therapyId_startsAt_key',
+        'sqlite_autoindex_AvailabilitySlot_1',
+      ]);
+      expect(
+        database
+          .prepare("PRAGMA foreign_key_list('AvailabilitySlot')")
+          .all()
+          .map(({ table, from, to, on_delete: onDelete }) => ({
+            table,
+            from,
+            to,
+            onDelete,
+          })),
+      ).toEqual([
+        {
+          table: 'Therapy',
+          from: 'therapyId',
+          to: 'id',
+          onDelete: 'CASCADE',
+        },
+      ]);
+      expect(
+        database
+          .prepare("PRAGMA table_info('AvailabilitySlot')")
+          .all()
+          .filter(({ name }) => name !== 'id')
+          .every(({ notnull }) => Number(notnull) === 1),
+      ).toBe(true);
+
+      const insert = database.prepare(
+        'INSERT INTO AvailabilitySlot (id, therapyId, startsAt, durationMinutes, isAvailable) VALUES (?, ?, ?, ?, ?)',
+      );
+      expect(() =>
+        insert.run(
+          randomUUID(),
+          'missing-therapy',
+          '2035-01-01T00:00:00.000Z',
+          30,
+          1,
+        ),
+      ).toThrow();
+
+      database
+        .prepare(
+          'INSERT INTO Therapy (id, name, summary, description) VALUES (?, ?, ?, ?)',
+        )
+        .run(therapyId, 'Constraint Therapy', 'Summary', 'Description');
+      expect(() =>
+        insert.run(randomUUID(), therapyId, '2035-01-01', 0, 1),
+      ).toThrow();
+      expect(() => insert.run(randomUUID(), therapyId, null, 30, 1)).toThrow();
+      insert.run(randomUUID(), therapyId, '2035-01-01', 30, 1);
+      expect(() =>
+        insert.run(randomUUID(), therapyId, '2035-01-01', 45, 1),
+      ).toThrow();
+    } finally {
+      database.prepare('DELETE FROM Therapy WHERE id = ?').run(therapyId);
+      database.close();
+    }
   });
 
   it('queries through the injectable Prisma service and disconnects', async () => {
@@ -357,6 +517,38 @@ describe('persistent foundation', () => {
     expect(stateAfterSecondSeed.ailments).toHaveLength(4);
     expect(stateAfterSecondSeed.therapies).toHaveLength(4);
     expect(stateAfterSecondSeed.associations).toHaveLength(5);
+    expect(stateAfterSecondSeed.availabilitySlots).toHaveLength(6);
+    expect(
+      stateAfterSecondSeed.availabilitySlots.map((slot) => ({
+        id: String((slot as { id: unknown }).id),
+        startsAt: Date.parse(String((slot as { startsAt: unknown }).startsAt)),
+      })),
+    ).toEqual([
+      {
+        id: 'b07d4e94-cf65-41b3-a836-6d9a0c3f7b41',
+        startsAt: Date.parse('2035-05-20T15:00:00.000Z'),
+      },
+      {
+        id: '8d4a1b68-9c32-4e86-b520-3a6d7f0c4e18',
+        startsAt: Date.parse('2035-06-15T02:30:00.000Z'),
+      },
+      {
+        id: '9e5b2c70-ad43-4f98-8612-4b7e8a1d5f29',
+        startsAt: Date.parse('2035-06-15T03:30:00.000Z'),
+      },
+      {
+        id: 'af6c3d82-be54-40a1-9724-5c8f9b2e6a30',
+        startsAt: Date.parse('2035-06-16T14:00:00.000Z'),
+      },
+      {
+        id: 'c18e5fa6-d076-42c5-b948-7e0b1d4a8c52',
+        startsAt: Date.parse('2035-06-20T15:00:00.000Z'),
+      },
+      {
+        id: 'd29f60b8-e187-43d7-8a50-8f1c2e5b9d63',
+        startsAt: Date.parse('2035-07-01T13:00:00.000Z'),
+      },
+    ]);
     expect(
       stateAfterSecondSeed.agents.map((agent) =>
         String((agent as { name: unknown }).name),
@@ -382,7 +574,7 @@ describe('persistent foundation', () => {
       'Prompt Sorting Session',
       'Quiet Cache Reset',
     ]);
-  });
+  }, 15_000);
 
   it('keeps database dependencies and imports out of the web application', async () => {
     const webRoot = join(repositoryRoot, 'apps/web');
