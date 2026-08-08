@@ -72,6 +72,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 7 — Book an appointment
 
+**Status:** Complete
+
 - Add the Appointment model and a transactional NestJS booking operation.
 - Let an agent select an available slot and see confirmation.
 

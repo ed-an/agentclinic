@@ -113,6 +113,7 @@ describe('AvailabilityService', () => {
       where: {
         therapyId: contextGardenWalkId,
         isAvailable: true,
+        appointment: null,
         startsAt: { gte: fixedNow },
       },
       orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
@@ -153,6 +154,7 @@ describe('AvailabilityService', () => {
       where: {
         therapyId: contextGardenWalkId,
         isAvailable: true,
+        appointment: null,
         startsAt: { gte: from, lt: to },
       },
       orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
@@ -334,7 +336,7 @@ describe('Availability API', () => {
     expect(response.body).not.toContain('secret database path');
   });
 
-  it('registers no availability or booking mutation routes', async () => {
+  it('registers no availability mutations or later Appointment mutations', async () => {
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE'] as const) {
       expect(
         (
@@ -344,9 +346,10 @@ describe('Availability API', () => {
           })
         ).statusCode,
       ).toBe(404);
-      expect(
-        (await app.inject({ method, url: '/appointments' })).statusCode,
-      ).toBe(404);
+      if (method !== 'POST')
+        expect(
+          (await app.inject({ method, url: '/appointments' })).statusCode,
+        ).toBe(404);
     }
   });
 });

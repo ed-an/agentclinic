@@ -80,8 +80,7 @@ export default async function TherapyDetailPage({
             Upcoming availability
           </h2>
           <p className="text-clinic-muted mt-3 leading-7">
-            Times are shown in {timeZone}. Availability is informational until
-            booking opens in a later phase.
+            Times are shown in {timeZone}. Select a time to begin a booking.
           </p>
           {availabilityGroups.length === 0 ? (
             <p className="text-clinic-muted mt-4 leading-7">
@@ -113,6 +112,12 @@ export default async function TherapyDetailPage({
                         <time className="sr-only" dateTime={slot.endsAt}>
                           Ends at {slot.endsAt}
                         </time>
+                        <Link
+                          className="text-clinic-brand mt-3 inline-flex min-h-11 items-center font-bold underline"
+                          href={`/appointments/book?slotId=${slot.id}`}
+                        >
+                          Book this time
+                        </Link>
                       </li>
                     ))}
                   </ul>

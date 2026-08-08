@@ -248,6 +248,41 @@ async function createPhase5Database(databasePath: string): Promise<void> {
   }
 }
 
+async function createPhase6Database(databasePath: string): Promise<void> {
+  await createPhase5Database(databasePath);
+  const migrationName = '20260807200000_appointment_availability';
+  const migration = await readFile(
+    join(serverRoot, `prisma/migrations/${migrationName}/migration.sql`),
+    'utf8',
+  );
+  const database = new DatabaseSync(databasePath);
+  try {
+    database.exec(migration);
+    database
+      .prepare(
+        `INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, applied_steps_count) VALUES (?, ?, current_timestamp, ?, 1)`,
+      )
+      .run(
+        randomUUID(),
+        createHash('sha256').update(migration).digest('hex'),
+        migrationName,
+      );
+    database
+      .prepare(
+        'INSERT INTO AvailabilitySlot (id, therapyId, startsAt, durationMinutes, isAvailable) VALUES (?, ?, ?, ?, ?)',
+      )
+      .run(
+        '8d4a1b68-9c32-4e86-b520-3a6d7f0c4e18',
+        '1d7f3a90-2b64-4c18-8e52-6a9d0f3b7c41',
+        '2035-06-15T02:30:00.000Z',
+        45,
+        1,
+      );
+  } finally {
+    database.close();
+  }
+}
+
 async function listSourceFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = await Promise.all(
@@ -303,6 +338,7 @@ describe('persistent foundation', () => {
     expect(stateAfterSecondDeploy.tables).toEqual([
       'Agent',
       'Ailment',
+      'Appointment',
       'AvailabilitySlot',
       'Therapy',
       '_AilmentToTherapy',
@@ -327,12 +363,13 @@ describe('persistent foundation', () => {
     expect(afterUpgrade.tables).toEqual([
       'Agent',
       'Ailment',
+      'Appointment',
       'AvailabilitySlot',
       'Therapy',
       '_AilmentToTherapy',
       '_prisma_migrations',
     ]);
-    expect(afterUpgrade.migrations).toHaveLength(5);
+    expect(afterUpgrade.migrations).toHaveLength(6);
     expect(afterUpgrade.agents).toEqual([]);
   }, 15_000);
 
@@ -356,7 +393,7 @@ describe('persistent foundation', () => {
     expect(beforeUpgrade.tables).toEqual(['Agent', '_prisma_migrations']);
     expect(afterUpgrade.agents).toEqual(beforeUpgrade.agents);
     expect(afterUpgrade.ailments).toEqual([]);
-    expect(afterUpgrade.migrations).toHaveLength(5);
+    expect(afterUpgrade.migrations).toHaveLength(6);
     expect(afterRedeploy).toEqual(afterUpgrade);
   }, 15_000);
 
@@ -381,7 +418,7 @@ describe('persistent foundation', () => {
     expect(afterUpgrade.ailments).toEqual(beforeUpgrade.ailments);
     expect(afterUpgrade.therapies).toEqual([]);
     expect(afterUpgrade.associations).toEqual([]);
-    expect(afterUpgrade.migrations).toHaveLength(5);
+    expect(afterUpgrade.migrations).toHaveLength(6);
     expect(afterRedeploy).toEqual(afterUpgrade);
   }, 15_000);
 
@@ -407,8 +444,32 @@ describe('persistent foundation', () => {
     expect(afterUpgrade.therapies).toEqual(beforeUpgrade.therapies);
     expect(afterUpgrade.associations).toEqual(beforeUpgrade.associations);
     expect(afterUpgrade.availabilitySlots).toEqual([]);
-    expect(afterUpgrade.migrations).toHaveLength(5);
+    expect(afterUpgrade.migrations).toHaveLength(6);
     expect(afterRedeploy).toEqual(afterUpgrade);
+  }, 15_000);
+
+  it('upgrades a completed Phase 6 database without changing prior records', async () => {
+    const path = join(temporaryDirectory, 'phase-6.db');
+    await createPhase6Database(path);
+    const before = readDatabaseState(path);
+    const environment = { ...process.env, DATABASE_URL: `file:${path}` };
+    await execute('npx', ['prisma', 'migrate', 'deploy'], {
+      cwd: serverRoot,
+      env: environment,
+    });
+    const after = readDatabaseState(path);
+    await execute('npx', ['prisma', 'migrate', 'deploy'], {
+      cwd: serverRoot,
+      env: environment,
+    });
+    expect(after.agents).toEqual(before.agents);
+    expect(after.ailments).toEqual(before.ailments);
+    expect(after.therapies).toEqual(before.therapies);
+    expect(after.associations).toEqual(before.associations);
+    expect(after.availabilitySlots).toEqual(before.availabilitySlots);
+    expect(after.tables).toContain('Appointment');
+    expect(after.migrations).toHaveLength(6);
+    expect(readDatabaseState(path)).toEqual(after);
   }, 15_000);
 
   it('enforces slot foreign keys, uniqueness, positive duration, and approved indexes', () => {
