@@ -8,7 +8,7 @@ export type BookingContext = Readonly<{
 }>;
 export type AppointmentConfirmation = Readonly<{
   id: string;
-  status: 'CONFIRMED';
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
   therapy: { id: string; name: string };
   agent: { id: string; name: string };
   startsAt: string;

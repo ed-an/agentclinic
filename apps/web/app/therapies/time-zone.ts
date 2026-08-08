@@ -34,6 +34,18 @@ export function formatSlot(
   return { ...group.slots[0], dateLabel: group.dateLabel };
 }
 
+export function formatInstant(instant: string, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(new Date(instant));
+}
+
 export type AvailabilityGroup = Readonly<{
   key: string;
   dateLabel: string;

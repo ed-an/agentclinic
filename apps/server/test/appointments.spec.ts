@@ -126,7 +126,18 @@ describe('Appointments API', () => {
     });
     expect(stored.visitorName).toBe('Ada Visitor');
     expect(stored.visitorEmail).toBe('ada@example.com');
+    expect(stored.status).toBe('PENDING');
     expect(stored.availabilitySlot.isAvailable).toBe(true);
+    expect(
+      await app.get(PrismaService).appointmentStatusEvent.count({
+        where: {
+          appointmentId: stored.id,
+          fromStatus: null,
+          toStatus: 'PENDING',
+          actorType: 'VISITOR',
+        },
+      }),
+    ).toBe(1);
     const replay = await app.inject({
       method: 'POST',
       url: '/appointments',
@@ -139,6 +150,11 @@ describe('Appointments API', () => {
     });
     expect(replay.statusCode).toBe(200);
     expect(replay.json()).toEqual(body);
+    expect(
+      await app.get(PrismaService).appointmentStatusEvent.count({
+        where: { appointmentId: stored.id },
+      }),
+    ).toBe(1);
     const availability = await app.inject({
       method: 'GET',
       url: `/therapies/${therapyId}/availability`,

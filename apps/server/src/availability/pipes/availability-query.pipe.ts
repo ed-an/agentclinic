@@ -7,7 +7,10 @@ const MAX_RANGE_MILLISECONDS =
 const ISO_INSTANT_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(?:Z|([+-])(\d{2}):(\d{2}))$/;
 
-function parseInstant(value: unknown, name: 'from' | 'to'): Date | undefined {
+export function parseInstant(
+  value: unknown,
+  name: 'from' | 'to',
+): Date | undefined {
   if (value === undefined) return undefined;
   const match =
     typeof value === 'string' ? ISO_INSTANT_PATTERN.exec(value) : null;

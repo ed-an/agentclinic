@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { AvailabilitySlot } from './therapy-api';
 import {
   DEFAULT_DISPLAY_TIME_ZONE,
+  formatInstant,
   getDisplayTimeZone,
   groupAvailabilitySlots,
 } from './time-zone';
@@ -47,6 +48,12 @@ describe('availability timezone formatting', () => {
       expect.stringContaining('June 14, 2035'),
       expect.stringContaining('June 15, 2035'),
     ]);
+  });
+
+  it('formats operational timestamps with the same configured timezone', () => {
+    expect(
+      formatInstant('2035-06-15T02:30:00.000Z', 'America/Sao_Paulo'),
+    ).toContain('June 14, 2035');
   });
 
   it('preserves UTC ordering through nonexistent and repeated New York clock times', () => {

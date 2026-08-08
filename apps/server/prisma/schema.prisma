@@ -57,16 +57,32 @@ model Appointment {
   agentId            String
   visitorName        String
   visitorEmail       String
-  status             String           @default("CONFIRMED")
+  status             String           @default("PENDING")
   cancelledAt        DateTime?
+  cancellationSource String?
+  cancellationReasonCode String?
   idempotencyKey     String           @unique
   createdAt          DateTime         @default(now())
   availabilitySlot   AvailabilitySlot @relation(fields: [availabilitySlotId], references: [id], onDelete: Restrict)
   agent              Agent            @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  statusEvents       AppointmentStatusEvent[]
 
   @@index([agentId])
   @@index([agentId, status])
   // SQLite active-booking uniqueness is enforced by the partial index
-  // Appointment_one_confirmed_per_slot in the Phase 8 SQL migration. Prisma
+  // Appointment_one_active_per_slot in the Phase 9 SQL migration. Prisma
   // cannot represent partial indexes; future migrations must preserve it.
+}
+
+model AppointmentStatusEvent {
+  id            String      @id
+  appointmentId String
+  fromStatus    String?
+  toStatus      String
+  actorType     String
+  reasonCode    String?
+  createdAt     DateTime
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId, createdAt, id])
 }

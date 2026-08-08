@@ -15,6 +15,11 @@ import {
 } from './dto/appointment-response.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { CancellationPolicyService } from './cancellation-policy.service';
+import {
+  StaffAppointmentQueryDto,
+  StaffAppointmentResponseDto,
+  StaffCancellationReasonCode,
+} from './dto/staff-appointment.dto';
 
 export const DISPLAY_TIME_ZONE =
   process.env.AGENTCLINIC_TIME_ZONE ?? 'America/Sao_Paulo';
@@ -26,6 +31,21 @@ const appointmentInclude = {
       durationMinutes: true,
       therapy: { select: { id: true, name: true } },
     },
+  },
+} as const;
+const staffAppointmentInclude = {
+  agent: { select: { id: true, name: true } },
+  availabilitySlot: {
+    select: {
+      startsAt: true,
+      durationMinutes: true,
+      therapy: { select: { id: true, name: true } },
+    },
+  },
+  statusEvents: {
+    select: { createdAt: true },
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
   },
 } as const;
 
@@ -44,7 +64,7 @@ export class AppointmentsService {
       include: {
         therapy: { select: { id: true, name: true } },
         appointments: {
-          where: { status: 'CONFIRMED' },
+          where: { status: { in: ['PENDING', 'CONFIRMED'] } },
           select: { id: true },
           take: 1,
         },
@@ -86,7 +106,7 @@ export class AppointmentsService {
           where: { id: input.availabilitySlotId },
           include: {
             appointments: {
-              where: { status: 'CONFIRMED' },
+              where: { status: { in: ['PENDING', 'CONFIRMED'] } },
               select: { id: true },
               take: 1,
             },
@@ -109,8 +129,18 @@ export class AppointmentsService {
             id: randomUUID(),
             ...input,
             idempotencyKey,
-            status: 'CONFIRMED',
+            status: 'PENDING',
             createdAt: this.clock.now(),
+            statusEvents: {
+              create: {
+                id: randomUUID(),
+                fromStatus: null,
+                toStatus: 'PENDING',
+                actorType: 'VISITOR',
+                reasonCode: null,
+                createdAt: this.clock.now(),
+              },
+            },
           },
           include: appointmentInclude,
         });
@@ -235,8 +265,26 @@ export class AppointmentsService {
           );
         const changed = await tx.appointment.updateMany({
           where: { id: appointmentId, agentId, status: 'CONFIRMED' },
-          data: { status: 'CANCELLED', cancelledAt: now },
+          data: {
+            status: 'CANCELLED',
+            cancelledAt: now,
+            cancellationSource: 'AGENT',
+            cancellationReasonCode: null,
+          },
         });
+        if (changed.count === 1) {
+          await tx.appointmentStatusEvent.create({
+            data: {
+              id: randomUUID(),
+              appointmentId,
+              fromStatus: 'CONFIRMED',
+              toStatus: 'CANCELLED',
+              actorType: 'AGENT',
+              reasonCode: null,
+              createdAt: now,
+            },
+          });
+        }
         const result = await tx.appointment.findUnique({
           where: { id: appointmentId },
           include: {
@@ -254,6 +302,165 @@ export class AppointmentsService {
         return result;
       });
       return this.toAgentAppointment(record, now);
+    } catch (error: unknown) {
+      if (
+        error instanceof ConflictException ||
+        error instanceof NotFoundException
+      )
+        throw error;
+      throw new InternalServerErrorException(
+        'Unable to cancel the appointment safely',
+      );
+    }
+  }
+
+  async findStaffQueue(
+    query: StaffAppointmentQueryDto,
+  ): Promise<StaffAppointmentResponseDto[]> {
+    const now = this.clock.now();
+    const records = await this.prisma.appointment.findMany({
+      where: {
+        ...(query.statuses
+          ? { status: { in: query.statuses } }
+          : { status: { in: ['PENDING', 'CONFIRMED'] } }),
+        ...(query.agentId ? { agentId: query.agentId } : {}),
+        availabilitySlot: {
+          ...(query.therapyId ? { therapyId: query.therapyId } : {}),
+          startsAt: {
+            ...(query.from
+              ? { gte: query.from }
+              : !query.hasExplicitFilters
+                ? { gt: now }
+                : {}),
+            ...(query.to ? { lt: query.to } : {}),
+          },
+        },
+      },
+      include: staffAppointmentInclude,
+      orderBy: [{ availabilitySlot: { startsAt: 'asc' } }, { id: 'asc' }],
+    });
+    return records.map(
+      (record) =>
+        new StaffAppointmentResponseDto(record, DISPLAY_TIME_ZONE, now),
+    );
+  }
+
+  async confirmStaff(
+    appointmentId: string,
+  ): Promise<StaffAppointmentResponseDto> {
+    const now = this.clock.now();
+    try {
+      const record = await this.prisma.$transaction(async (tx) => {
+        const appointment = await tx.appointment.findUnique({
+          where: { id: appointmentId },
+          include: staffAppointmentInclude,
+        });
+        if (!appointment) throw new NotFoundException('Appointment not found');
+        if (
+          appointment.status === 'CONFIRMED' &&
+          appointment.availabilitySlot.startsAt > now
+        )
+          return appointment;
+        if (
+          appointment.status !== 'PENDING' ||
+          appointment.availabilitySlot.startsAt <= now
+        )
+          throw new ConflictException(
+            'This appointment cannot be confirmed in its current state',
+          );
+        const changed = await tx.appointment.updateMany({
+          where: { id: appointmentId, status: 'PENDING' },
+          data: { status: 'CONFIRMED' },
+        });
+        if (changed.count === 1) {
+          await tx.appointmentStatusEvent.create({
+            data: {
+              id: randomUUID(),
+              appointmentId,
+              fromStatus: 'PENDING',
+              toStatus: 'CONFIRMED',
+              actorType: 'STAFF',
+              reasonCode: null,
+              createdAt: now,
+            },
+          });
+        }
+        const result = await tx.appointment.findUnique({
+          where: { id: appointmentId },
+          include: staffAppointmentInclude,
+        });
+        if (!result || result.status !== 'CONFIRMED')
+          throw new ConflictException('Appointment state changed; try again');
+        return result;
+      });
+      return new StaffAppointmentResponseDto(record, DISPLAY_TIME_ZONE, now);
+    } catch (error: unknown) {
+      if (
+        error instanceof ConflictException ||
+        error instanceof NotFoundException
+      )
+        throw error;
+      throw new InternalServerErrorException(
+        'Unable to confirm the appointment safely',
+      );
+    }
+  }
+
+  async cancelStaff(
+    appointmentId: string,
+    reasonCode: StaffCancellationReasonCode,
+  ): Promise<StaffAppointmentResponseDto> {
+    const now = this.clock.now();
+    try {
+      const record = await this.prisma.$transaction(async (tx) => {
+        const appointment = await tx.appointment.findUnique({
+          where: { id: appointmentId },
+          include: staffAppointmentInclude,
+        });
+        if (!appointment) throw new NotFoundException('Appointment not found');
+        if (appointment.status === 'CANCELLED') return appointment;
+        if (
+          !['PENDING', 'CONFIRMED'].includes(appointment.status) ||
+          appointment.availabilitySlot.startsAt <= now
+        )
+          throw new ConflictException(
+            'This appointment cannot be cancelled in its current state',
+          );
+        const fromStatus = appointment.status;
+        const changed = await tx.appointment.updateMany({
+          where: {
+            id: appointmentId,
+            status: { in: ['PENDING', 'CONFIRMED'] },
+          },
+          data: {
+            status: 'CANCELLED',
+            cancelledAt: now,
+            cancellationSource: 'STAFF',
+            cancellationReasonCode: reasonCode,
+          },
+        });
+        if (changed.count === 1) {
+          await tx.appointmentStatusEvent.create({
+            data: {
+              id: randomUUID(),
+              appointmentId,
+              fromStatus,
+              toStatus: 'CANCELLED',
+              actorType: 'STAFF',
+              reasonCode,
+              createdAt: now,
+            },
+          });
+        }
+        const result = await tx.appointment.findUnique({
+          where: { id: appointmentId },
+          include: staffAppointmentInclude,
+        });
+        if (!result || result.status !== 'CANCELLED')
+          throw new ConflictException('Appointment state changed; try again');
+        return result;
+      });
+      return new StaffAppointmentResponseDto(record, DISPLAY_TIME_ZONE, now);
     } catch (error: unknown) {
       if (
         error instanceof ConflictException ||
