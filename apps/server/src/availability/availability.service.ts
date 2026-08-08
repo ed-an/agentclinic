@@ -27,7 +27,7 @@ export class AvailabilityService {
       where: {
         therapyId,
         isAvailable: true,
-        appointment: null,
+        appointments: { none: { status: 'CONFIRMED' } },
         startsAt: {
           gte: from,
           ...(query.to ? { lt: query.to } : {}),

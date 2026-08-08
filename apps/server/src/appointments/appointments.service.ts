@@ -9,13 +9,15 @@ import {
 import { CurrentTimeService } from '../availability/current-time.service';
 import { PrismaService } from '../database/prisma.service';
 import {
+  AgentAppointmentResponseDto,
   AppointmentResponseDto,
   BookingContextResponseDto,
 } from './dto/appointment-response.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { CancellationPolicyService } from './cancellation-policy.service';
 
 export const DISPLAY_TIME_ZONE =
-  process.env.AGENTCLINIC_DISPLAY_TIME_ZONE ?? 'America/Sao_Paulo';
+  process.env.AGENTCLINIC_TIME_ZONE ?? 'America/Sao_Paulo';
 const appointmentInclude = {
   agent: { select: { id: true, name: true } },
   availabilitySlot: {
@@ -32,6 +34,8 @@ export class AppointmentsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CurrentTimeService) private readonly clock: CurrentTimeService,
+    @Inject(CancellationPolicyService)
+    private readonly cancellationPolicy: CancellationPolicyService,
   ) {}
 
   async getBookingContext(slotId: string): Promise<BookingContextResponseDto> {
@@ -39,14 +43,18 @@ export class AppointmentsService {
       where: { id: slotId },
       include: {
         therapy: { select: { id: true, name: true } },
-        appointment: { select: { id: true } },
+        appointments: {
+          where: { status: 'CONFIRMED' },
+          select: { id: true },
+          take: 1,
+        },
       },
     });
     if (!slot) throw new NotFoundException('Availability slot not found');
     if (
       !slot.isAvailable ||
       slot.startsAt <= this.clock.now() ||
-      slot.appointment
+      slot.appointments.length > 0
     )
       throw new ConflictException('This slot is no longer available');
     return new BookingContextResponseDto(slot, DISPLAY_TIME_ZONE);
@@ -76,13 +84,19 @@ export class AppointmentsService {
         }
         const slot = await tx.availabilitySlot.findUnique({
           where: { id: input.availabilitySlotId },
-          include: { appointment: { select: { id: true } } },
+          include: {
+            appointments: {
+              where: { status: 'CONFIRMED' },
+              select: { id: true },
+              take: 1,
+            },
+          },
         });
         if (!slot) throw new NotFoundException('Availability slot not found');
         if (
           !slot.isAvailable ||
           slot.startsAt <= this.clock.now() ||
-          slot.appointment
+          slot.appointments.length > 0
         )
           throw new ConflictException('This slot is no longer available');
         const agent = await tx.agent.findUnique({
@@ -153,5 +167,130 @@ export class AppointmentsService {
     });
     if (!record) throw new NotFoundException('Appointment not found');
     return new AppointmentResponseDto(record, DISPLAY_TIME_ZONE);
+  }
+
+  async findUpcoming(agentId: string): Promise<AgentAppointmentResponseDto[]> {
+    const agent = await this.prisma.agent.findUnique({
+      where: { id: agentId },
+      select: { id: true },
+    });
+    if (!agent) throw new NotFoundException('Agent not found');
+    const now = this.clock.now();
+    const records = await this.prisma.appointment.findMany({
+      where: {
+        agentId,
+        status: 'CONFIRMED',
+        availabilitySlot: { startsAt: { gt: now } },
+      },
+      include: {
+        availabilitySlot: {
+          select: {
+            startsAt: true,
+            durationMinutes: true,
+            therapy: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: [{ availabilitySlot: { startsAt: 'asc' } }, { id: 'asc' }],
+    });
+    return records.map((record) => this.toAgentAppointment(record, now));
+  }
+
+  async cancel(
+    agentId: string,
+    appointmentId: string,
+  ): Promise<AgentAppointmentResponseDto> {
+    const now = this.clock.now();
+    try {
+      const record = await this.prisma.$transaction(async (tx) => {
+        const agent = await tx.agent.findUnique({
+          where: { id: agentId },
+          select: { id: true },
+        });
+        if (!agent) throw new NotFoundException('Appointment not found');
+        const appointment = await tx.appointment.findUnique({
+          where: { id: appointmentId },
+          include: {
+            availabilitySlot: {
+              select: {
+                startsAt: true,
+                durationMinutes: true,
+                therapy: { select: { id: true, name: true } },
+              },
+            },
+          },
+        });
+        if (!appointment || appointment.agentId !== agentId)
+          throw new NotFoundException('Appointment not found');
+        if (appointment.status === 'CANCELLED') return appointment;
+        if (
+          appointment.status !== 'CONFIRMED' ||
+          !this.cancellationPolicy.isEligible(
+            appointment.availabilitySlot.startsAt,
+            now,
+          )
+        )
+          throw new ConflictException(
+            'This appointment is no longer eligible for cancellation',
+          );
+        const changed = await tx.appointment.updateMany({
+          where: { id: appointmentId, agentId, status: 'CONFIRMED' },
+          data: { status: 'CANCELLED', cancelledAt: now },
+        });
+        const result = await tx.appointment.findUnique({
+          where: { id: appointmentId },
+          include: {
+            availabilitySlot: {
+              select: {
+                startsAt: true,
+                durationMinutes: true,
+                therapy: { select: { id: true, name: true } },
+              },
+            },
+          },
+        });
+        if (!result || (changed.count === 0 && result.status !== 'CANCELLED'))
+          throw new ConflictException('Appointment state changed; try again');
+        return result;
+      });
+      return this.toAgentAppointment(record, now);
+    } catch (error: unknown) {
+      if (
+        error instanceof ConflictException ||
+        error instanceof NotFoundException
+      )
+        throw error;
+      throw new InternalServerErrorException(
+        'Unable to cancel the appointment safely',
+      );
+    }
+  }
+
+  private toAgentAppointment(
+    record: {
+      id: string;
+      status: string;
+      cancelledAt: Date | null;
+      availabilitySlot: {
+        startsAt: Date;
+        durationMinutes: number;
+        therapy: { id: string; name: string };
+      };
+    },
+    now: Date,
+  ): AgentAppointmentResponseDto {
+    const deadline = this.cancellationPolicy.deadline(
+      record.availabilitySlot.startsAt,
+    );
+    return new AgentAppointmentResponseDto(
+      record,
+      DISPLAY_TIME_ZONE,
+      deadline,
+      record.status === 'CONFIRMED' &&
+        this.cancellationPolicy.isEligible(
+          record.availabilitySlot.startsAt,
+          now,
+        ),
+    );
   }
 }

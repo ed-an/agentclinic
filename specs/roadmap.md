@@ -81,6 +81,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 8 — Agent dashboard
 
+**Status:** Complete
+
 - Show an agent's upcoming appointments.
 - Allow an agent to cancel an eligible appointment.
 

@@ -45,7 +45,7 @@ model AvailabilitySlot {
   durationMinutes Int
   isAvailable     Boolean
   therapy         Therapy      @relation(fields: [therapyId], references: [id], onDelete: Cascade)
-  appointment     Appointment?
+  appointments    Appointment[]
 
   @@unique([therapyId, startsAt])
   @@index([therapyId, isAvailable, startsAt, id])
@@ -53,15 +53,20 @@ model AvailabilitySlot {
 
 model Appointment {
   id                 String           @id
-  availabilitySlotId String           @unique
+  availabilitySlotId String
   agentId            String
   visitorName        String
   visitorEmail       String
   status             String           @default("CONFIRMED")
+  cancelledAt        DateTime?
   idempotencyKey     String           @unique
   createdAt          DateTime         @default(now())
   availabilitySlot   AvailabilitySlot @relation(fields: [availabilitySlotId], references: [id], onDelete: Restrict)
   agent              Agent            @relation(fields: [agentId], references: [id], onDelete: Restrict)
 
   @@index([agentId])
+  @@index([agentId, status])
+  // SQLite active-booking uniqueness is enforced by the partial index
+  // Appointment_one_confirmed_per_slot in the Phase 8 SQL migration. Prisma
+  // cannot represent partial indexes; future migrations must preserve it.
 }

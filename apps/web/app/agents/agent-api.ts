@@ -5,6 +5,18 @@ export type Agent = Readonly<{
   summary: string;
 }>;
 
+export type AgentAppointment = Readonly<{
+  id: string;
+  status: 'CONFIRMED' | 'CANCELLED';
+  therapy: { id: string; name: string };
+  startsAt: string;
+  endsAt: string;
+  durationMinutes: number;
+  cancellationEligible: boolean;
+  cancellationDeadline: string;
+  displayTimeZone: string;
+}>;
+
 const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://127.0.0.1:3001';
 
 function isAgent(value: unknown): value is Agent {
@@ -43,4 +55,40 @@ export async function getAgent(id: string): Promise<Agent | null> {
     throw new Error('The agent profile returned an invalid response');
   }
   return body;
+}
+
+function isAgentAppointment(value: unknown): value is AgentAppointment {
+  if (typeof value !== 'object' || value === null) return false;
+  const item = value as Record<string, unknown>;
+  const therapy = item.therapy as Record<string, unknown> | undefined;
+  return (
+    typeof item.id === 'string' &&
+    (item.status === 'CONFIRMED' || item.status === 'CANCELLED') &&
+    typeof therapy?.id === 'string' &&
+    typeof therapy.name === 'string' &&
+    typeof item.startsAt === 'string' &&
+    typeof item.endsAt === 'string' &&
+    typeof item.durationMinutes === 'number' &&
+    typeof item.cancellationEligible === 'boolean' &&
+    typeof item.cancellationDeadline === 'string' &&
+    typeof item.displayTimeZone === 'string'
+  );
+}
+
+export async function getUpcomingAppointments(
+  agentId: string,
+): Promise<AgentAppointment[] | null> {
+  const response = await request(
+    `/agents/${encodeURIComponent(agentId)}/appointments/upcoming`,
+  );
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error('Unable to load upcoming appointments');
+  const body: unknown = await response.json();
+  if (!Array.isArray(body) || !body.every(isAgentAppointment))
+    throw new Error('The dashboard returned an invalid response');
+  return body;
+}
+
+export function getAgentAppointmentsApiUrl(): string {
+  return apiUrl;
 }
