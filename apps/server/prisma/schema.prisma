@@ -8,16 +8,17 @@ datasource db {
 }
 
 model Agent {
-  id      String @id
-  name    String
-  model   String
-  summary String
+  id           String        @id
+  name         String
+  model        String
+  summary      String
+  appointments Appointment[]
 
   @@index([name, id])
 }
 
 model Ailment {
-  id          String @id
+  id          String    @id
   name        String
   summary     String
   description String
@@ -38,13 +39,29 @@ model Therapy {
 }
 
 model AvailabilitySlot {
-  id              String   @id
+  id              String       @id
   therapyId       String
   startsAt        DateTime
   durationMinutes Int
   isAvailable     Boolean
-  therapy         Therapy  @relation(fields: [therapyId], references: [id], onDelete: Cascade)
+  therapy         Therapy      @relation(fields: [therapyId], references: [id], onDelete: Cascade)
+  appointment     Appointment?
 
   @@unique([therapyId, startsAt])
   @@index([therapyId, isAvailable, startsAt, id])
+}
+
+model Appointment {
+  id                 String           @id
+  availabilitySlotId String           @unique
+  agentId            String
+  visitorName        String
+  visitorEmail       String
+  status             String           @default("CONFIRMED")
+  idempotencyKey     String           @unique
+  createdAt          DateTime         @default(now())
+  availabilitySlot   AvailabilitySlot @relation(fields: [availabilitySlotId], references: [id], onDelete: Restrict)
+  agent              Agent            @relation(fields: [agentId], references: [id], onDelete: Restrict)
+
+  @@index([agentId])
 }

@@ -5,6 +5,6 @@ import { AvailabilityQueryPipe } from './pipes/availability-query.pipe';
 
 @Module({
   providers: [AvailabilityService, AvailabilityQueryPipe, CurrentTimeService],
-  exports: [AvailabilityService, AvailabilityQueryPipe],
+  exports: [AvailabilityService, AvailabilityQueryPipe, CurrentTimeService],
 })
 export class AvailabilityModule {}

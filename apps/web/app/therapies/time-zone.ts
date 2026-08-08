@@ -26,6 +26,14 @@ type FormattedAvailabilitySlot = Readonly<{
   timeZoneLabel: string;
 }>;
 
+export function formatSlot(
+  slot: AvailabilitySlot,
+  timeZone: string,
+): FormattedAvailabilitySlot & { dateLabel: string } {
+  const group = groupAvailabilitySlots([slot], timeZone)[0];
+  return { ...group.slots[0], dateLabel: group.dateLabel };
+}
+
 export type AvailabilityGroup = Readonly<{
   key: string;
   dateLabel: string;
