@@ -50,6 +50,12 @@ export default async function AgentsPage() {
                 >
                   View {agent.name}&apos;s profile
                 </Link>
+                <Link
+                  className="text-clinic-brand hover:text-clinic-brand-strong mt-2 inline-flex min-h-11 items-center font-bold underline decoration-2 underline-offset-4"
+                  href={`/agents/${agent.id}/dashboard`}
+                >
+                  Open {agent.name}&apos;s dashboard
+                </Link>
               </article>
             </li>
           ))}

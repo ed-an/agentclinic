@@ -12,7 +12,7 @@ export type AppointmentRecord = Readonly<{
 
 export class AppointmentResponseDto {
   readonly id: string;
-  readonly status: 'CONFIRMED';
+  readonly status: 'CONFIRMED' | 'CANCELLED';
   readonly therapy: { id: string; name: string };
   readonly agent: { id: string; name: string };
   readonly startsAt: string;
@@ -23,7 +23,7 @@ export class AppointmentResponseDto {
 
   constructor(record: AppointmentRecord, displayTimeZone: string) {
     this.id = record.id;
-    this.status = 'CONFIRMED';
+    this.status = record.status === 'CANCELLED' ? 'CANCELLED' : 'CONFIRMED';
     this.therapy = record.availabilitySlot.therapy;
     this.agent = record.agent;
     this.startsAt = record.availabilitySlot.startsAt.toISOString();
@@ -34,6 +34,49 @@ export class AppointmentResponseDto {
     ).toISOString();
     this.displayTimeZone = displayTimeZone;
     this.createdAt = record.createdAt.toISOString();
+  }
+}
+
+export type AgentAppointmentRecord = Readonly<{
+  id: string;
+  status: string;
+  cancelledAt: Date | null;
+  availabilitySlot: {
+    startsAt: Date;
+    durationMinutes: number;
+    therapy: { id: string; name: string };
+  };
+}>;
+
+export class AgentAppointmentResponseDto {
+  readonly id: string;
+  readonly status: 'CONFIRMED' | 'CANCELLED';
+  readonly therapy: { id: string; name: string };
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly durationMinutes: number;
+  readonly cancellationEligible: boolean;
+  readonly cancellationDeadline: string;
+  readonly displayTimeZone: string;
+
+  constructor(
+    record: AgentAppointmentRecord,
+    displayTimeZone: string,
+    cancellationDeadline: Date,
+    cancellationEligible: boolean,
+  ) {
+    this.id = record.id;
+    this.status = record.status === 'CANCELLED' ? 'CANCELLED' : 'CONFIRMED';
+    this.therapy = record.availabilitySlot.therapy;
+    this.startsAt = record.availabilitySlot.startsAt.toISOString();
+    this.durationMinutes = record.availabilitySlot.durationMinutes;
+    this.endsAt = new Date(
+      record.availabilitySlot.startsAt.getTime() +
+        record.availabilitySlot.durationMinutes * 60_000,
+    ).toISOString();
+    this.cancellationEligible = cancellationEligible;
+    this.cancellationDeadline = cancellationDeadline.toISOString();
+    this.displayTimeZone = displayTimeZone;
   }
 }
 
