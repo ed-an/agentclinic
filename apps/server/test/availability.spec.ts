@@ -113,7 +113,7 @@ describe('AvailabilityService', () => {
       where: {
         therapyId: contextGardenWalkId,
         isAvailable: true,
-        appointments: { none: { status: 'CONFIRMED' } },
+        appointments: { none: { status: { in: ['PENDING', 'CONFIRMED'] } } },
         startsAt: { gte: fixedNow },
       },
       orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
@@ -154,7 +154,7 @@ describe('AvailabilityService', () => {
       where: {
         therapyId: contextGardenWalkId,
         isAvailable: true,
-        appointments: { none: { status: 'CONFIRMED' } },
+        appointments: { none: { status: { in: ['PENDING', 'CONFIRMED'] } } },
         startsAt: { gte: from, lt: to },
       },
       orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],

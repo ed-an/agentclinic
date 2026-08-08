@@ -20,6 +20,11 @@ test('Agent selects a dashboard and cancels an appointment by keyboard', async (
     },
   });
   expect(booking.status()).toBe(201);
+  const pending = (await booking.json()) as { id: string };
+  const confirmation = await request.post(
+    `${apiUrl}/staff/appointments/${pending.id}/confirm`,
+  );
+  expect(confirmation.status()).toBe(200);
 
   await page.goto('/agents');
   await page.getByRole('link', { name: "Open Ada's dashboard" }).focus();

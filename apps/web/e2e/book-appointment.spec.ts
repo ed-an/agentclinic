@@ -21,12 +21,12 @@ test('visitor completes and refreshes a private booking by keyboard', async ({
   await page.getByRole('button', { name: 'Confirm booking' }).focus();
   await page.keyboard.press('Enter');
   await expect(
-    page.getByRole('heading', { name: 'Your appointment is confirmed' }),
+    page.getByRole('heading', { name: 'Your appointment request is pending' }),
   ).toBeVisible();
   await expect(page.getByText('browser@example.test')).toHaveCount(0);
   await page.reload();
   await expect(
-    page.getByRole('heading', { name: 'Your appointment is confirmed' }),
+    page.getByRole('heading', { name: 'Your appointment request is pending' }),
   ).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(

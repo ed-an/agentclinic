@@ -12,7 +12,7 @@ export type AppointmentRecord = Readonly<{
 
 export class AppointmentResponseDto {
   readonly id: string;
-  readonly status: 'CONFIRMED' | 'CANCELLED';
+  readonly status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
   readonly therapy: { id: string; name: string };
   readonly agent: { id: string; name: string };
   readonly startsAt: string;
@@ -23,7 +23,12 @@ export class AppointmentResponseDto {
 
   constructor(record: AppointmentRecord, displayTimeZone: string) {
     this.id = record.id;
-    this.status = record.status === 'CANCELLED' ? 'CANCELLED' : 'CONFIRMED';
+    this.status =
+      record.status === 'CANCELLED'
+        ? 'CANCELLED'
+        : record.status === 'PENDING'
+          ? 'PENDING'
+          : 'CONFIRMED';
     this.therapy = record.availabilitySlot.therapy;
     this.agent = record.agent;
     this.startsAt = record.availabilitySlot.startsAt.toISOString();

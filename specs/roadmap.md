@@ -90,6 +90,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 9 — Staff appointment queue
 
+**Status:** Complete
+
 - Show staff the appointment queue with useful filters.
 - Allow staff to confirm or cancel an appointment with a recorded status change.
 

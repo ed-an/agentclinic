@@ -51,6 +51,7 @@ async function createAppointment(
       visitorEmail: 'private@example.test',
       status,
       cancelledAt,
+      cancellationSource: status === 'CANCELLED' ? 'AGENT' : null,
       idempotencyKey: crypto.randomUUID(),
       createdAt: new Date('2035-05-01T00:00:00.000Z'),
     },
@@ -241,6 +242,18 @@ describe('Phase 8 Agent dashboard API', () => {
     });
     expect(cancelled.status).toBe('CANCELLED');
     expect(cancelled.cancelledAt?.toISOString()).toBe(now.toISOString());
+    expect(cancelled.cancellationSource).toBe('AGENT');
+    expect(cancelled.cancellationReasonCode).toBeNull();
+    expect(
+      await prisma.appointmentStatusEvent.count({
+        where: {
+          appointmentId: appointment.id,
+          fromStatus: 'CONFIRMED',
+          toStatus: 'CANCELLED',
+          actorType: 'AGENT',
+        },
+      }),
+    ).toBe(1);
     const replay = await app.inject({ method: 'POST', url });
     expect(replay.statusCode).toBe(200);
     expect(
@@ -250,6 +263,11 @@ describe('Phase 8 Agent dashboard API', () => {
         })
       ).cancelledAt,
     ).toEqual(cancelled.cancelledAt);
+    expect(
+      await prisma.appointmentStatusEvent.count({
+        where: { appointmentId: appointment.id, actorType: 'AGENT' },
+      }),
+    ).toBe(1);
     const availability = await app.inject({
       method: 'GET',
       url: `/therapies/${therapyId}/availability`,
@@ -287,7 +305,10 @@ describe('Phase 8 Agent dashboard API', () => {
     ).toBe(2);
     expect(
       await prisma.appointment.count({
-        where: { availabilitySlotId: slot.id, status: 'CONFIRMED' },
+        where: {
+          availabilitySlotId: slot.id,
+          status: { in: ['PENDING', 'CONFIRMED'] },
+        },
       }),
     ).toBe(1);
   });

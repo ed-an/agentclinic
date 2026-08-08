@@ -31,9 +31,15 @@ export default async function ConfirmationPage({
   return (
     <article className="border-clinic-border bg-clinic-surface max-w-2xl rounded-clinic border p-6 sm:p-10">
       <p className="text-clinic-brand font-bold uppercase tracking-widest">
-        Booking confirmed
+        Request received
       </p>
-      <h1 className="mt-3 text-4xl font-bold">Your appointment is confirmed</h1>
+      <h1 className="mt-3 text-4xl font-bold">
+        Your appointment request is pending
+      </h1>
+      <p className="text-clinic-muted mt-4 leading-7">
+        Clinic staff will review this request before it is confirmed. This time
+        is reserved while the request is pending.
+      </p>
       <dl className="mt-8 grid gap-5">
         <div>
           <dt className="font-bold">Therapy</dt>
