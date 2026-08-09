@@ -15,6 +15,7 @@ export type StaffAppointment = Readonly<{
 }>;
 
 const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://127.0.0.1:3001';
+import { requestWithSession } from '../../auth/auth-api';
 
 function isStaffAppointment(value: unknown): value is StaffAppointment {
   if (!value || typeof value !== 'object') return false;
@@ -45,9 +46,8 @@ export async function getStaffAppointments(
   const apiQuery = new URLSearchParams(
     [...query.entries()].filter(([, value]) => value !== ''),
   );
-  const response = await fetch(
-    `${apiUrl}/staff/appointments${apiQuery.size ? `?${apiQuery.toString()}` : ''}`,
-    { cache: 'no-store', headers: { accept: 'application/json' } },
+  const response = await requestWithSession(
+    `/staff/appointments${apiQuery.size ? `?${apiQuery.toString()}` : ''}`,
   );
   if (!response.ok) throw new Error('Unable to load the staff queue safely');
   const body: unknown = await response.json();

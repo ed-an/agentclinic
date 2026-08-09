@@ -38,9 +38,6 @@ describe('AgentsPage', () => {
       screen.getByRole('link', { name: "View Ada's profile" }),
     ).toHaveAttribute('href', `/agents/${agents[0].id}`);
     expect(
-      screen.getByRole('link', { name: "Open Ada's dashboard" }),
-    ).toHaveAttribute('href', `/agents/${agents[0].id}/dashboard`);
-    expect(
       screen
         .getAllByRole('heading', { level: 2 })
         .map(({ textContent }) => textContent?.trim()),

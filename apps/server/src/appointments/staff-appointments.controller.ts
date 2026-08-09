@@ -17,8 +17,10 @@ import {
 } from './dto/staff-appointment.dto';
 import { StaffAppointmentQueryPipe } from './pipes/staff-appointment-query.pipe';
 import { StaffCancellationPipe } from './pipes/staff-cancellation.pipe';
+import { RequireRole } from '../auth/auth.guard';
 
 @Controller('staff/appointments')
+@RequireRole('STAFF')
 export class StaffAppointmentsController {
   constructor(
     @Inject(AppointmentsService)

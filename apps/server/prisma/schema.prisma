@@ -13,8 +13,37 @@ model Agent {
   model        String
   summary      String
   appointments Appointment[]
+  userAccount  UserAccount?
 
   @@index([name, id])
+}
+
+model UserAccount {
+  id           String        @id
+  email        String        @unique
+  passwordHash String
+  role         String
+  agentId      String?       @unique
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  agent        Agent?        @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  sessions     AuthSession[]
+
+  @@index([role, isActive])
+}
+
+model AuthSession {
+  id            String      @id
+  accountId     String
+  tokenHash     String      @unique
+  csrfTokenHash String      @unique
+  createdAt     DateTime
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  account       UserAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, expiresAt])
 }
 
 model Ailment {

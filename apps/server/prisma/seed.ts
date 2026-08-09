@@ -26,6 +26,53 @@ const agents = [
   },
 ] as const;
 
+const demoAccounts = [
+  {
+    id: '8d0b8f2a-cb8e-4e80-a982-5e90ff0f0010',
+    email: 'staff@demo.agentclinic.test',
+    role: 'STAFF',
+    agentId: null,
+  },
+  ...agents.map((agent, index) => ({
+    id: [
+      '8d0b8f2a-cb8e-4e80-a982-5e90ff0f0011',
+      '8d0b8f2a-cb8e-4e80-a982-5e90ff0f0012',
+      '8d0b8f2a-cb8e-4e80-a982-5e90ff0f0013',
+    ][index],
+    email: `${agent.name.toLowerCase()}@demo.agentclinic.test`,
+    role: 'AGENT',
+    agentId: agent.id,
+  })),
+] as const;
+
+function demoPasswordHashes(): Record<string, string> | null {
+  if (process.env.AGENTCLINIC_ENABLE_DEMO_ACCOUNTS !== 'true') return null;
+  const raw = process.env.AGENTCLINIC_DEMO_PASSWORD_HASHES;
+  if (!raw)
+    throw new Error(
+      'Demo account seeding requires AGENTCLINIC_DEMO_PASSWORD_HASHES.',
+    );
+  const parsed: unknown = JSON.parse(raw);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+    throw new Error('Demo password hash configuration is invalid.');
+  const hashes = parsed as Record<string, unknown>;
+  const result: Record<string, string> = {};
+  for (const account of demoAccounts) {
+    const hash = hashes[account.email];
+    if (
+      typeof hash !== 'string' ||
+      !/^scrypt-v1\$131072\$8\$1\$[A-Za-z0-9_-]{43}\$[A-Za-z0-9_-]{86}$/.test(
+        hash,
+      )
+    )
+      throw new Error('Demo password hash configuration is incomplete.');
+    result[account.email] = hash;
+  }
+  if (new Set(Object.values(result)).size !== demoAccounts.length)
+    throw new Error('Each demo account requires an independently salted hash.');
+  return result;
+}
+
 const ailments = [
   {
     id: '16c0b8e2-7a4d-4f91-8c35-2d6e9a1b7f40',
@@ -158,6 +205,7 @@ async function seed(): Promise<void> {
   const prisma = new PrismaClient({ adapter });
 
   try {
+    const passwordHashes = demoPasswordHashes();
     for (const agent of agents) {
       await prisma.agent.upsert({
         where: { id: agent.id },
@@ -211,6 +259,22 @@ async function seed(): Promise<void> {
           isAvailable: slot.isAvailable,
         },
       });
+    }
+    if (passwordHashes) {
+      for (const account of demoAccounts) {
+        const data = {
+          email: account.email,
+          passwordHash: passwordHashes[account.email],
+          role: account.role,
+          agentId: account.agentId,
+          isActive: true,
+        };
+        await prisma.userAccount.upsert({
+          where: { id: account.id },
+          create: { id: account.id, ...data },
+          update: data,
+        });
+      }
     }
     console.log(
       `Clinic catalog ready with ${agents.length} agents, ${ailments.length} ailments, ${therapies.length} therapies, and ${availabilitySlots.length} availability slots.`,

@@ -7,7 +7,7 @@ const routes = [
   { path: '/ailments', heading: 'Ailments' },
   { path: '/therapies', heading: 'Therapies' },
   { path: '/appointments', heading: 'Appointments' },
-  { path: '/staff', heading: 'Staff' },
+  { path: '/sign-in', heading: 'Sign in' },
 ] as const;
 
 for (const route of routes) {

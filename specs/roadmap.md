@@ -99,6 +99,8 @@ Work proceeds in the following order. Each phase is intentionally small, must le
 
 ## Phase 10 — Access control
 
+**Status:** Complete
+
 - Add authentication for agents and staff.
 - Enforce role and record ownership rules with NestJS guards and server-side policy checks.
 

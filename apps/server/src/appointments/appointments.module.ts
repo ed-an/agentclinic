@@ -5,13 +5,16 @@ import { AppointmentsService } from './appointments.service';
 import { AgentAppointmentsController } from './agent-appointments.controller';
 import { CancellationPolicyService } from './cancellation-policy.service';
 import { StaffAppointmentsController } from './staff-appointments.controller';
+import { AuthModule } from '../auth/auth.module';
+import { CurrentAgentAppointmentsController } from './current-agent-appointments.controller';
 
 @Module({
-  imports: [AvailabilityModule],
+  imports: [AvailabilityModule, AuthModule],
   controllers: [
     AppointmentsController,
     AgentAppointmentsController,
     StaffAppointmentsController,
+    CurrentAgentAppointmentsController,
   ],
   providers: [AppointmentsService, CancellationPolicyService],
 })

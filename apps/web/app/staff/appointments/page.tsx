@@ -7,6 +7,8 @@ import {
   getStaffAppointments,
   getStaffAppointmentsApiUrl,
 } from './staff-appointment-api';
+import { getSession, signInPath } from '../../auth/auth-api';
+import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Staff appointment queue | AgentClinic',
@@ -18,6 +20,9 @@ type Props = Readonly<{
 }>;
 
 export default async function StaffAppointmentsPage({ searchParams }: Props) {
+  const session = await getSession();
+  if (!session) redirect(signInPath('/staff/appointments'));
+  if (session.role !== 'STAFF') redirect('/forbidden');
   const input = await searchParams;
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(input)) {
@@ -40,13 +45,6 @@ export default async function StaffAppointmentsPage({ searchParams }: Props) {
         title="Staff appointment queue"
         introduction="Review pending requests and keep each appointment status clear."
       />
-      <aside className="border-clinic-danger bg-clinic-surface mt-6 max-w-3xl rounded-clinic border p-5 leading-7">
-        <p className="font-bold">Unauthenticated demonstration access</p>
-        <p className="text-clinic-muted mt-1">
-          This staff route is not authenticated and is not suitable for
-          production use. Do not use it with private or real user data.
-        </p>
-      </aside>
       <form
         className="border-clinic-border mt-8 grid gap-5 rounded-clinic border p-5 lg:grid-cols-2"
         method="get"
@@ -152,6 +150,7 @@ export default async function StaffAppointmentsPage({ searchParams }: Props) {
         apiUrl={getStaffAppointmentsApiUrl()}
         filtered={filtered}
         visibleStatuses={statuses}
+        csrfToken={session.csrfToken}
       />
     </>
   );

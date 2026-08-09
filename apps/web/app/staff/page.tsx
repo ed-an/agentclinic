@@ -1,10 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { PageHeader } from '../components/page-header';
+import { getSession, signInPath } from '../auth/auth-api';
 
 export const metadata: Metadata = { title: 'Staff | AgentClinic' };
 
-export default function StaffPage() {
+export default async function StaffPage() {
+  const session = await getSession();
+  if (!session) redirect(signInPath('/staff'));
+  if (session.role !== 'STAFF') redirect('/forbidden');
   return (
     <>
       <PageHeader

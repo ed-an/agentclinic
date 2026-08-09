@@ -6,14 +6,15 @@ import { formatSlot } from '../../../therapies/time-zone';
 import { EmptyState } from '../../../components/states/empty-state';
 
 type Props = Readonly<{
-  agentId: string;
+  agentId?: string;
   apiUrl: string;
+  csrfToken?: string;
   initialAppointments: AgentAppointment[];
 }>;
 
 export function AppointmentDashboard({
-  agentId,
   apiUrl,
+  csrfToken = '',
   initialAppointments,
 }: Props) {
   const [appointments, setAppointments] = useState(initialAppointments);
@@ -46,8 +47,15 @@ export function AppointmentDashboard({
     setFeedback(null);
     try {
       const response = await fetch(
-        `${apiUrl}/agents/${encodeURIComponent(agentId)}/appointments/${encodeURIComponent(appointment.id)}/cancel`,
-        { method: 'POST', headers: { accept: 'application/json' } },
+        `${apiUrl}/agent/appointments/${encodeURIComponent(appointment.id)}/cancel`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            accept: 'application/json',
+            'x-agentclinic-csrf': csrfToken,
+          },
+        },
       );
       if (response.status === 409) {
         setConfirmingId(null);

@@ -7,6 +7,10 @@ const migrationPath = resolve(
   __dirname,
   '../prisma/migrations/20260808200000_staff_appointment_queue/migration.sql',
 );
+const accessControlMigrationPath = resolve(
+  __dirname,
+  '../prisma/migrations/20260809120000_access_control/migration.sql',
+);
 
 describe('Phase 9 Appointment migration', () => {
   it('preserves Phase 8 data, snapshots once, and enforces active uniqueness', async () => {
@@ -115,6 +119,33 @@ describe('Phase 9 Appointment migration', () => {
       expect(() =>
         database.exec(`INSERT INTO Appointment VALUES
           ('bad-reason', 'slot-b', 'agent', 'B', 'bad@example.test', 'CANCELLED', CURRENT_TIMESTAMP, 'STAFF', NULL, 'key-g', CURRENT_TIMESTAMP)`),
+      ).toThrow(/CHECK/);
+      const appointmentsBeforeAccessControl = database
+        .prepare('SELECT * FROM Appointment ORDER BY id')
+        .all();
+      const eventsBeforeAccessControl = database
+        .prepare('SELECT * FROM AppointmentStatusEvent ORDER BY id')
+        .all();
+      database.exec(await readFile(accessControlMigrationPath, 'utf8'));
+      expect(
+        database.prepare('SELECT * FROM Appointment ORDER BY id').all(),
+      ).toEqual(appointmentsBeforeAccessControl);
+      expect(
+        database
+          .prepare('SELECT * FROM AppointmentStatusEvent ORDER BY id')
+          .all(),
+      ).toEqual(eventsBeforeAccessControl);
+      expect(
+        database
+          .prepare(
+            "SELECT count(*) AS count FROM sqlite_master WHERE name='Appointment_one_active_per_slot'",
+          )
+          .get(),
+      ).toEqual({ count: 1 });
+      expect(() =>
+        database.exec(`INSERT INTO UserAccount
+          (id, email, passwordHash, role, agentId, isActive, createdAt, updatedAt)
+          VALUES ('bad-staff', 'staff@example.test', 'fixture', 'STAFF', 'agent', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`),
       ).toThrow(/CHECK/);
       expect(database.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
     } finally {

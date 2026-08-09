@@ -17,6 +17,7 @@ type Props = Readonly<{
   apiUrl: string;
   filtered: boolean;
   visibleStatuses: string[];
+  csrfToken?: string;
 }>;
 
 export function AppointmentQueue({
@@ -24,6 +25,7 @@ export function AppointmentQueue({
   apiUrl,
   filtered,
   visibleStatuses,
+  csrfToken = '',
 }: Props) {
   const [appointments, setAppointments] = useState(initialAppointments);
   const [action, setAction] = useState<{
@@ -59,8 +61,10 @@ export function AppointmentQueue({
         `${apiUrl}/staff/appointments/${encodeURIComponent(appointment.id)}/${action.kind}`,
         {
           method: 'POST',
+          credentials: 'include',
           headers: {
             accept: 'application/json',
+            'x-agentclinic-csrf': csrfToken,
             ...(action.kind === 'cancel'
               ? { 'content-type': 'application/json' }
               : {}),

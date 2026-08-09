@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
 const slotId = 'd29f60b8-e187-43d7-8a50-8f1c2e5b9d63';
+const validationSlotId = '8d4a1b68-9c32-4e86-b520-3a6d7f0c4e18';
 
 test('visitor completes and refreshes a private booking by keyboard', async ({
   page,
@@ -40,7 +41,7 @@ test('booking validation, malformed context, and responsive reflow are safe', as
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 720 });
-  await page.goto(`/appointments/book?slotId=${slotId}`);
+  await page.goto(`/appointments/book?slotId=${validationSlotId}`);
   await page.getByRole('button', { name: 'Review booking' }).click();
   await expect(
     page.getByText('Choose an Agent and enter a valid name and email.'),
