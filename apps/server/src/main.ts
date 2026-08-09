@@ -4,6 +4,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
+import { trustedOrigins } from './auth/auth-config';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -11,10 +12,8 @@ async function bootstrap(): Promise<void> {
     new FastifyAdapter({ bodyLimit: 8 * 1024 }),
   );
   app.enableCors({
-    origin: process.env.AGENTCLINIC_WEB_ORIGIN?.split(',') ?? [
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3200',
-    ],
+    origin: trustedOrigins(),
+    credentials: true,
   });
   const port = Number(process.env.PORT ?? 3001);
   await app.listen(port, '0.0.0.0');

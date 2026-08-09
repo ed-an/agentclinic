@@ -340,8 +340,10 @@ describe('persistent foundation', () => {
       'Ailment',
       'Appointment',
       'AppointmentStatusEvent',
+      'AuthSession',
       'AvailabilitySlot',
       'Therapy',
+      'UserAccount',
       '_AilmentToTherapy',
       '_prisma_migrations',
     ]);
@@ -366,12 +368,14 @@ describe('persistent foundation', () => {
       'Ailment',
       'Appointment',
       'AppointmentStatusEvent',
+      'AuthSession',
       'AvailabilitySlot',
       'Therapy',
+      'UserAccount',
       '_AilmentToTherapy',
       '_prisma_migrations',
     ]);
-    expect(afterUpgrade.migrations).toHaveLength(8);
+    expect(afterUpgrade.migrations).toHaveLength(9);
     expect(afterUpgrade.agents).toEqual([]);
   }, 15_000);
 
@@ -395,7 +399,7 @@ describe('persistent foundation', () => {
     expect(beforeUpgrade.tables).toEqual(['Agent', '_prisma_migrations']);
     expect(afterUpgrade.agents).toEqual(beforeUpgrade.agents);
     expect(afterUpgrade.ailments).toEqual([]);
-    expect(afterUpgrade.migrations).toHaveLength(8);
+    expect(afterUpgrade.migrations).toHaveLength(9);
     expect(afterRedeploy).toEqual(afterUpgrade);
   }, 15_000);
 
@@ -420,7 +424,7 @@ describe('persistent foundation', () => {
     expect(afterUpgrade.ailments).toEqual(beforeUpgrade.ailments);
     expect(afterUpgrade.therapies).toEqual([]);
     expect(afterUpgrade.associations).toEqual([]);
-    expect(afterUpgrade.migrations).toHaveLength(8);
+    expect(afterUpgrade.migrations).toHaveLength(9);
     expect(afterRedeploy).toEqual(afterUpgrade);
   }, 15_000);
 
@@ -446,7 +450,7 @@ describe('persistent foundation', () => {
     expect(afterUpgrade.therapies).toEqual(beforeUpgrade.therapies);
     expect(afterUpgrade.associations).toEqual(beforeUpgrade.associations);
     expect(afterUpgrade.availabilitySlots).toEqual([]);
-    expect(afterUpgrade.migrations).toHaveLength(8);
+    expect(afterUpgrade.migrations).toHaveLength(9);
     expect(afterRedeploy).toEqual(afterUpgrade);
   }, 15_000);
 
@@ -470,7 +474,7 @@ describe('persistent foundation', () => {
     expect(after.associations).toEqual(before.associations);
     expect(after.availabilitySlots).toEqual(before.availabilitySlots);
     expect(after.tables).toContain('Appointment');
-    expect(after.migrations).toHaveLength(8);
+    expect(after.migrations).toHaveLength(9);
     expect(readDatabaseState(path)).toEqual(after);
   }, 15_000);
 

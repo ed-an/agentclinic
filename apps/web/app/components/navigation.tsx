@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { Session } from '../auth/auth-types';
+import { SignOutButton } from '../auth/sign-out-button';
 
 export const navigationItems = [
   { href: '/', label: 'Home' },
@@ -9,10 +11,15 @@ export const navigationItems = [
   { href: '/ailments', label: 'Ailments' },
   { href: '/therapies', label: 'Therapies' },
   { href: '/appointments', label: 'Appointments' },
-  { href: '/staff', label: 'Staff' },
 ] as const;
 
-export function Navigation() {
+export function Navigation({
+  apiUrl,
+  session,
+}: {
+  apiUrl: string;
+  session: Session | null;
+}) {
   const pathname = usePathname();
 
   return (
@@ -39,6 +46,40 @@ export function Navigation() {
             </li>
           );
         })}
+        {session?.role === 'AGENT' && (
+          <li>
+            <Link
+              className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold"
+              href="/agent/dashboard"
+            >
+              My dashboard
+            </Link>
+          </li>
+        )}
+        {session?.role === 'STAFF' && (
+          <li>
+            <Link
+              className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold"
+              href="/staff/appointments"
+            >
+              Staff appointments
+            </Link>
+          </li>
+        )}
+        {session ? (
+          <li>
+            <SignOutButton apiUrl={apiUrl} csrfToken={session.csrfToken} />
+          </li>
+        ) : (
+          <li>
+            <Link
+              className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold"
+              href="/sign-in"
+            >
+              Sign in
+            </Link>
+          </li>
+        )}
       </ul>
     </nav>
   );

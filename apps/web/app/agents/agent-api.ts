@@ -18,6 +18,7 @@ export type AgentAppointment = Readonly<{
 }>;
 
 const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://127.0.0.1:3001';
+import { requestWithSession } from '../auth/auth-api';
 
 function isAgent(value: unknown): value is Agent {
   if (typeof value !== 'object' || value === null) return false;
@@ -75,13 +76,8 @@ function isAgentAppointment(value: unknown): value is AgentAppointment {
   );
 }
 
-export async function getUpcomingAppointments(
-  agentId: string,
-): Promise<AgentAppointment[] | null> {
-  const response = await request(
-    `/agents/${encodeURIComponent(agentId)}/appointments/upcoming`,
-  );
-  if (response.status === 404) return null;
+export async function getUpcomingAppointments(): Promise<AgentAppointment[]> {
+  const response = await requestWithSession('/agent/appointments/upcoming');
   if (!response.ok) throw new Error('Unable to load upcoming appointments');
   const body: unknown = await response.json();
   if (!Array.isArray(body) || !body.every(isAgentAppointment))

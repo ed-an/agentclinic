@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { signInPage } from './auth-helper';
 
 const apiUrl = 'http://127.0.0.1:3201';
 const agentId = '0b3d5a7e-1f24-4c68-9a02-3e5f7b8d1c40';
@@ -21,10 +22,7 @@ test('staff filters, confirms, and cancels a pending request by keyboard', async
   expect(booking.status()).toBe(201);
   const appointment = (await booking.json()) as { id: string };
 
-  await page.goto('/staff/appointments');
-  await expect(
-    page.getByText('Unauthenticated demonstration access'),
-  ).toBeVisible();
+  await signInPage(page, 'staff@demo.agentclinic.test');
   await expect(page.getByText('staff-browser@example.test')).toHaveCount(0);
   await page.getByLabel('PENDING').check();
   await page.getByRole('button', { name: 'Apply filters' }).click();
@@ -66,6 +64,7 @@ test('staff filters, confirms, and cancels a pending request by keyboard', async
 test('staff queue has no horizontal overflow at phone and desktop widths', async ({
   page,
 }) => {
+  await signInPage(page, 'staff@demo.agentclinic.test');
   for (const width of [320, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/staff/appointments?status=CANCELLED');

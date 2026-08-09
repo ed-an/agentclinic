@@ -13,6 +13,7 @@ import { AppModule } from '../src/app.module';
 import { CurrentTimeService } from '../src/availability/current-time.service';
 import { parseCancellationCutoffHours } from '../src/appointments/cancellation-policy.service';
 import { PrismaService } from '../src/database/prisma.service';
+import { installAuthenticatedInject } from './authenticated-inject';
 
 const execute = promisify(execFile);
 const serverRoot = resolve(__dirname, '..');
@@ -81,6 +82,7 @@ describe('Phase 8 Agent dashboard API', () => {
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
     prisma = app.get(PrismaService);
+    await installAuthenticatedInject(app, prisma, now);
   });
 
   beforeEach(async () => {

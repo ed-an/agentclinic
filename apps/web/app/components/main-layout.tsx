@@ -2,12 +2,14 @@ import type { ReactNode } from 'react';
 import { Footer } from './footer';
 import { Header } from './header';
 import { Main } from './main';
+import type { Session } from '../auth/auth-types';
 
 type MainLayoutProps = Readonly<{
   children: ReactNode;
+  session?: Session | null;
 }>;
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({ children, session = null }: MainLayoutProps) {
   return (
     <div className="grid min-h-screen grid-rows-[auto_1fr_auto]">
       <a
@@ -16,7 +18,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       >
         Skip to main content
       </a>
-      <Header />
+      <Header session={session} />
       <Main>{children}</Main>
       <Footer />
     </div>

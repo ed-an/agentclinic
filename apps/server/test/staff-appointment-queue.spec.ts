@@ -12,6 +12,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { AppModule } from '../src/app.module';
 import { CurrentTimeService } from '../src/availability/current-time.service';
 import { PrismaService } from '../src/database/prisma.service';
+import { installAuthenticatedInject } from './authenticated-inject';
 
 const execute = promisify(execFile);
 const serverRoot = resolve(__dirname, '..');
@@ -91,6 +92,7 @@ describe('Phase 9 staff appointment queue', () => {
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
     prisma = app.get(PrismaService);
+    await installAuthenticatedInject(app, prisma, now);
   });
 
   beforeEach(async () => {
