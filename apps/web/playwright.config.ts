@@ -44,7 +44,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'node ../../scripts/browser-server.mjs',
-      url: 'http://127.0.0.1:3201/health',
+      url: 'http://127.0.0.1:3201/health/ready',
       reuseExistingServer: false,
       timeout: 120_000,
       env: {

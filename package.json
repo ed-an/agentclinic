@@ -28,6 +28,12 @@
     "test:browser": "npm run test:browser --workspace @agentclinic/web",
     "build": "npm run build --workspaces --if-present",
     "smoke": "node scripts/smoke.mjs",
+    "backup:sqlite": "node scripts/sqlite-ops.mjs backup",
+    "restore:sqlite": "node scripts/sqlite-ops.mjs restore",
+    "test:backup-restore": "node --test scripts/sqlite-ops.test.mjs",
+    "performance:validate": "node scripts/performance.mjs",
+    "test:operations": "node scripts/operational-smoke.mjs",
+    "test:production-readiness": "npm run test:operations && npm run test:backup-restore && npm run performance:validate",
     "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test:validation && npm run build && npm run smoke && npm run test:browser"
   },
   "devDependencies": {

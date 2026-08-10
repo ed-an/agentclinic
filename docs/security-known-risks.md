@@ -1,8 +1,12 @@
 # Security known risks
 
+## 2026-08-10 Phase 11 reassessment
+
+Supported npm update/dedupe retains `find-my-way@9.6.0` under `@nestjs/platform-fastify@11.1.28`; a direct 9.7.0 install leaves that runtime copy in place and was therefore removed. The HTTP/2-only advisory path remains disabled and accepted pending a supported NestJS patch. PostCSS and Sharp remain accepted, currently unreachable runtime risks whose supported npm remediation requires the prohibited Next.js 16.3.0 major upgrade. Full evidence, owners, and triggers are in [dependency-risk-review.md](dependency-risk-review.md).
+
 ## 2026-08-09 dependency advisory review
 
-The following advisories are unresolved, pre-date Phase 10, and require separate remediation. Phase 10 did not introduce or change the affected dependencies or their lockfile entries. These findings are documented as accepted risks for the Phase 10 merge; they are not suppressed or considered resolved.
+The following records preserve the Phase 10 assessment. Phase 11 supersedes the router status above while retaining the Next-bundled risk context.
 
 ### NestJS/Fastify router
 

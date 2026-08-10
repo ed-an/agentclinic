@@ -83,7 +83,7 @@ try {
     DATABASE_URL: databaseUrl,
   });
   await probe(
-    `http://127.0.0.1:${serverPort}/health`,
+    `http://127.0.0.1:${serverPort}/health/ready`,
     (body) => body === '{"status":"ok"}',
     'Server health smoke check',
   );

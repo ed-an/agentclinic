@@ -31,7 +31,8 @@ You can also run one application with `npm run dev:server` or
 `npm run dev:web`.
 
 - Web home: <http://localhost:3000>
-- Server health: <http://localhost:3001/health>
+- Server liveness: <http://localhost:3001/health/live>
+- Server readiness: <http://localhost:3001/health/ready>
 
 The clinic shell includes a read-only Agent directory at `/agents`. A seeded
 Agent has a separate profile page. The `/ailments`, `/therapies`,
@@ -94,6 +95,9 @@ npm run test:validation # Vitest validation tests for both applications
 npm run test:browser  # build the web app and run Playwright accessibility checks
 npm run build         # production builds
 npm run smoke         # probe both production builds and stop them afterward
+npm run test:operations # structured logs, headers, health, startup, shutdown
+npm run test:backup-restore # safe temporary SQLite backup/restore validation
+npm run performance:validate # conservative local production-build budgets
 npm run ci            # every merge check above, in order
 ```
 
