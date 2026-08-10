@@ -3,7 +3,7 @@ import type { Session } from './auth-types';
 export type { Session } from './auth-types';
 
 export const apiUrl =
-  process.env.AGENTCLINIC_API_URL ?? 'http://127.0.0.1:3001';
+  process.env.AGENTCLINIC_API_URL ?? 'http://localhost:3001';
 
 export async function requestWithSession(
   path: string,

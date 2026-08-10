@@ -1,9 +1,17 @@
 import { ForbiddenException } from '@nestjs/common';
 
-const DEFAULT_ORIGINS = ['http://127.0.0.1:3000', 'http://127.0.0.1:3200'];
+const DEFAULT_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3200',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3200',
+];
 
 export function trustedOrigins(): string[] {
   const configured = process.env.AGENTCLINIC_WEB_ORIGIN;
+  if (!configured && process.env.NODE_ENV === 'production') {
+    throw new Error('AGENTCLINIC_WEB_ORIGIN must be configured in production');
+  }
   const values = configured ? configured.split(',') : DEFAULT_ORIGINS;
   return values.map((value) => {
     const origin = value.trim();

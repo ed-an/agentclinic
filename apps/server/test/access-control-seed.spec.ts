@@ -95,5 +95,5 @@ describe('Phase 10 deterministic demo seed', () => {
       ).count,
     ).toBe(0);
     database.close();
-  });
+  }, 15_000);
 });

@@ -61,7 +61,7 @@ test('a no-result search is distinct and can be cleared', async ({ page }) => {
   await expect(
     page.getByRole('searchbox', { name: 'Search ailments' }),
   ).toHaveValue('missing');
-  await page.getByRole('link', { name: 'Clear search' }).click();
+  await page.getByRole('button', { name: 'Clear search' }).click();
   await expect(page).toHaveURL(/\/ailments$/);
   await expect(
     page.getByRole('heading', { name: 'Complete catalog' }),
