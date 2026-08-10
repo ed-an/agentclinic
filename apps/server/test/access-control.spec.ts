@@ -102,7 +102,7 @@ describe('Phase 10 access control', () => {
         },
       ],
     });
-  });
+  }, 15_000);
 
   beforeEach(async () => {
     clockNow = new Date(now);

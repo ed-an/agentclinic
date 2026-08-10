@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "environment": "Node 24.19.0, Linux x64, production build, warm-up 2, samples 10, concurrency 2",
+  "recordedAt": "2026-08-10T19:15:00.000Z",
+  "routes": {
+    "agents-api": 5.89,
+    "agent-dashboard-api": 14.93,
+    "staff-queue-api": 7.32,
+    "home-page": 25.03,
+    "appointments-page": 21.99
+  },
+  "noiseFloor": {
+    "agents-api": 25,
+    "agent-dashboard-api": 25,
+    "staff-queue-api": 25,
+    "home-page": 75,
+    "appointments-page": 75
+  }
+}
