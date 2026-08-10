@@ -32,7 +32,7 @@ describe('Therapy API client', () => {
 
     await expect(getTherapies()).resolves.toEqual([therapy]);
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://127.0.0.1:3001/therapies',
+      'http://localhost:3001/therapies',
       expect.objectContaining({ cache: 'no-store' }),
     );
   });
@@ -86,7 +86,7 @@ describe('Therapy API client', () => {
 
     await expect(getTherapyAvailability(therapy.id)).resolves.toEqual([slot]);
     expect(fetchMock).toHaveBeenCalledWith(
-      `http://127.0.0.1:3001/therapies/${therapy.id}/availability`,
+      `http://localhost:3001/therapies/${therapy.id}/availability`,
       expect.objectContaining({ cache: 'no-store' }),
     );
   });

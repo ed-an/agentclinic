@@ -86,10 +86,10 @@ describe('AilmentsPage', () => {
     expect(
       screen.getByRole('heading', { name: 'No search results' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Clear search' })).toHaveAttribute(
-      'href',
-      '/ailments',
-    );
+    const clearSearch = screen.getByRole('button', { name: 'Clear search' });
+    expect(clearSearch).toHaveAttribute('type', 'submit');
+    expect(clearSearch.closest('form')).toHaveAttribute('action', '/ailments');
+    expect(clearSearch.closest('form')).toHaveAttribute('method', 'get');
 
     rerender(
       await AilmentsPage({ searchParams: Promise.resolve({ q: '   ' }) }),

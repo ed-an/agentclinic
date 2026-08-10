@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { signInPage } from './auth-helper';
 
 const routes = [
   { path: '/', heading: 'AgentClinic' },
@@ -29,6 +30,43 @@ for (const route of routes) {
     expect(blockingViolations).toEqual([]);
   });
 }
+
+test('appointments directs visitors to booking and account actions', async ({
+  page,
+}) => {
+  await page.goto('/appointments');
+
+  await expect(
+    page.getByRole('heading', { name: 'Book an appointment' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Browse therapies' }),
+  ).toHaveAttribute('href', '/therapies');
+  await expect(
+    page.getByRole('link', { name: 'Sign in', exact: true }).last(),
+  ).toHaveAttribute('href', '/sign-in?returnTo=%2Fappointments');
+  await expect(page.getByText('Appointments will be ready soon')).toHaveCount(
+    0,
+  );
+});
+
+test('appointments directs Agents to their dashboard', async ({ page }) => {
+  await signInPage(page, 'ada@demo.agentclinic.test');
+  await page.goto('/appointments');
+
+  await expect(
+    page.getByRole('link', { name: 'Open my dashboard' }),
+  ).toHaveAttribute('href', '/agent/dashboard');
+});
+
+test('appointments directs Staff to their queue', async ({ page }) => {
+  await signInPage(page, 'staff@demo.agentclinic.test');
+  await page.goto('/appointments');
+
+  await expect(
+    page.getByRole('link', { name: 'Open staff queue' }),
+  ).toHaveAttribute('href', '/staff/appointments');
+});
 
 test('keyboard users can skip to content and navigate between areas', async ({
   page,

@@ -23,7 +23,7 @@ export type AvailabilitySlot = Readonly<{
   endsAt: string;
 }>;
 
-const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://127.0.0.1:3001';
+const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://localhost:3001';
 
 function isTherapy(value: unknown): value is Therapy {
   if (typeof value !== 'object' || value === null) return false;

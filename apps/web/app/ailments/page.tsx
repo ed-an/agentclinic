@@ -61,12 +61,14 @@ export default async function AilmentsPage({
         normalizedQuery ? (
           <EmptyState
             action={
-              <Link
-                className="text-clinic-brand hover:text-clinic-brand-strong inline-flex min-h-11 items-center font-bold underline decoration-2 underline-offset-4"
-                href="/ailments"
-              >
-                Clear search
-              </Link>
+              <form action="/ailments" method="get">
+                <button
+                  className="text-clinic-brand hover:text-clinic-brand-strong inline-flex min-h-11 items-center font-bold underline decoration-2 underline-offset-4"
+                  type="submit"
+                >
+                  Clear search
+                </button>
+              </form>
             }
             message={`No ailments match “${normalizedQuery}”. Try another name or summary.`}
             title="No search results"

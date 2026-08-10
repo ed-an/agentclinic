@@ -14,7 +14,7 @@ export type StaffAppointment = Readonly<{
   cancellationAllowed: boolean;
 }>;
 
-const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://127.0.0.1:3001';
+const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://localhost:3001';
 import { requestWithSession } from '../../auth/auth-api';
 
 function isStaffAppointment(value: unknown): value is StaffAppointment {

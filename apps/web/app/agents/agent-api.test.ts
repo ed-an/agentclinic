@@ -22,7 +22,7 @@ describe('Agent API client', () => {
 
     await expect(getAgents()).resolves.toEqual([ada]);
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://127.0.0.1:3001/agents',
+      'http://localhost:3001/agents',
       expect.objectContaining({ cache: 'no-store' }),
     );
   });

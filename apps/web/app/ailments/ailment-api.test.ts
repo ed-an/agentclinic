@@ -22,12 +22,12 @@ describe('Ailment API client', () => {
     await expect(getAilments(' prompt overload ')).resolves.toEqual([ailment]);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      'http://127.0.0.1:3001/ailments',
+      'http://localhost:3001/ailments',
       expect.objectContaining({ cache: 'no-store' }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      'http://127.0.0.1:3001/ailments?q=+prompt+overload+',
+      'http://localhost:3001/ailments?q=+prompt+overload+',
       expect.objectContaining({ cache: 'no-store' }),
     );
   });
@@ -81,7 +81,7 @@ describe('Ailment API client', () => {
     await expect(getAilmentTherapies(ailment.id)).resolves.toEqual([therapy]);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      `http://127.0.0.1:3001/ailments/${ailment.id}/therapies`,
+      `http://localhost:3001/ailments/${ailment.id}/therapies`,
       expect.objectContaining({ cache: 'no-store' }),
     );
     await expect(getAilmentTherapies(ailment.id)).rejects.toThrow(
