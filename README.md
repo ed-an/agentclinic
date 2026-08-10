@@ -69,7 +69,7 @@ The server API exposes the read-only directory at
 <http://localhost:3001/agents> and individual profiles at
 `http://localhost:3001/agents/:id`. Server-rendered web pages use
 `AGENTCLINIC_API_URL` when set and otherwise connect to
-`http://127.0.0.1:3001`; this variable is server-only and must not use a
+`http://localhost:3001`; this variable is server-only and must not use a
 `NEXT_PUBLIC_` prefix.
 
 To reset only the database selected by `DATABASE_URL`, run:

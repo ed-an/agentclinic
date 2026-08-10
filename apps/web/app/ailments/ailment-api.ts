@@ -12,7 +12,7 @@ export type AssociatedTherapy = Readonly<{
   description: string;
 }>;
 
-const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://127.0.0.1:3001';
+const apiUrl = process.env.AGENTCLINIC_API_URL ?? 'http://localhost:3001';
 
 function isAilment(value: unknown): value is Ailment {
   if (typeof value !== 'object' || value === null) return false;
