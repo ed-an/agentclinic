@@ -18,6 +18,8 @@ describe('operational configuration', () => {
       https: true,
       trustProxy: false,
       trustedOrigins: ['https://clinic.example.test'],
+      instanceCount: 1,
+      sqliteWriterMode: 'single',
     });
   });
 
@@ -47,6 +49,14 @@ describe('operational configuration', () => {
     [
       { ...production, AGENTCLINIC_CANCELLATION_CUTOFF_HOURS: 'zero' },
       'CONFIG_CANCELLATION_INVALID',
+    ],
+    [
+      { ...production, AGENTCLINIC_INSTANCE_COUNT: '2' },
+      'CONFIG_SINGLE_INSTANCE_REQUIRED',
+    ],
+    [
+      { ...production, AGENTCLINIC_SQLITE_WRITER: 'shared' },
+      'CONFIG_SINGLE_WRITER_REQUIRED',
     ],
   ])(
     'rejects unsafe production configuration without including values',

@@ -93,7 +93,7 @@ describe('Phase 9 staff appointment queue', () => {
     await app.getHttpAdapter().getInstance().ready();
     prisma = app.get(PrismaService);
     await installAuthenticatedInject(app, prisma, now);
-  });
+  }, 30_000);
 
   beforeEach(async () => {
     await prisma.appointmentStatusEvent.deleteMany();

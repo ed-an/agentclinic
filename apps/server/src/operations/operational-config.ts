@@ -11,6 +11,8 @@ export type OperationalConfig = Readonly<{
   trustProxy: false | 'loopback';
   https: boolean;
   shutdownTimeoutMs: number;
+  instanceCount: 1;
+  sqliteWriterMode: 'single';
 }>;
 
 export class ConfigurationError extends Error {
@@ -97,6 +99,16 @@ export function loadOperationalConfig(
   const https = environment.AGENTCLINIC_HTTPS === 'true';
   if (production && !https)
     throw new ConfigurationError('CONFIG_HTTPS_REQUIRED');
+  const instanceCount = positiveNumber(
+    environment.AGENTCLINIC_INSTANCE_COUNT,
+    1,
+    'CONFIG_INSTANCE_COUNT_INVALID',
+  );
+  if (!Number.isInteger(instanceCount) || instanceCount !== 1)
+    throw new ConfigurationError('CONFIG_SINGLE_INSTANCE_REQUIRED');
+  const sqliteWriterMode = environment.AGENTCLINIC_SQLITE_WRITER ?? 'single';
+  if (sqliteWriterMode !== 'single')
+    throw new ConfigurationError('CONFIG_SINGLE_WRITER_REQUIRED');
 
   return {
     environment: nodeEnvironment as OperationalConfig['environment'],
@@ -120,5 +132,7 @@ export function loadOperationalConfig(
       10_000,
       'CONFIG_SHUTDOWN_TIMEOUT_INVALID',
     ),
+    instanceCount: 1,
+    sqliteWriterMode: 'single',
   };
 }

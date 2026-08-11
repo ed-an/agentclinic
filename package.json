@@ -34,6 +34,11 @@
     "performance:validate": "node scripts/performance.mjs",
     "test:operations": "node scripts/operational-smoke.mjs",
     "test:production-readiness": "npm run test:operations && npm run test:backup-restore && npm run performance:validate",
+    "release:manifest": "node scripts/release-manifest.mjs",
+    "release:preflight": "node scripts/release-preflight.mjs",
+    "release:check": "node scripts/post-deployment-check.mjs",
+    "release:deploy": "node scripts/deploy-target.mjs",
+    "release:rollback": "node scripts/rollback-target.mjs",
     "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test:validation && npm run build && npm run smoke && npm run test:browser"
   },
   "devDependencies": {
