@@ -12,6 +12,7 @@ RUN test -n "$AGENTCLINIC_API_URL" && npm run build --workspace @agentclinic/web
 FROM node:24.19.0-bookworm-slim AS runtime
 ENV NODE_ENV=production PORT=3000
 WORKDIR /app
+COPY --from=build --chown=node:node /app/package.json /app/package-lock.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/apps/web ./apps/web
 USER node

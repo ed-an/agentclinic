@@ -1,0 +1,933 @@
+openapi: 3.1.0
+info:
+  title: AgentClinic existing HTTP API
+  version: 0.1.0
+  description: Current NestJS API only; no runtime documentation endpoint exists.
+servers:
+  - url: http://localhost:3001
+tags:
+  - name: Health
+  - name: Catalog
+  - name: Appointments
+  - name: Authentication
+  - name: Agent
+  - name: Staff
+paths:
+  /health:
+    get:
+      {
+        tags: [Health],
+        operationId: legacyHealth,
+        responses: { '200': { $ref: '#/components/responses/Health' } },
+      }
+  /health/live:
+    get:
+      {
+        tags: [Health],
+        operationId: liveness,
+        responses: { '200': { $ref: '#/components/responses/Health' } },
+      }
+  /health/ready:
+    get:
+      tags: [Health]
+      operationId: readiness
+      responses:
+        '200': { $ref: '#/components/responses/Health' }
+        '503':
+          {
+            description: Not ready,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: '#/components/schemas/Unavailable' } },
+              },
+          }
+  /agents:
+    get:
+      tags: [Catalog]
+      operationId: listAgents
+      responses:
+        {
+          '200':
+            {
+              description: Sorted Agents,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        {
+                          type: array,
+                          items: { $ref: '#/components/schemas/Agent' },
+                        },
+                    },
+                },
+            },
+        }
+  /agents/{id}:
+    get:
+      tags: [Catalog]
+      operationId: getAgent
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        {
+          '200':
+            {
+              description: Agent,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: '#/components/schemas/Agent' } },
+                },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        }
+  /ailments:
+    get:
+      tags: [Catalog]
+      operationId: listAilments
+      parameters:
+        [{ name: q, in: query, schema: { type: string, maxLength: 100 } }]
+      responses:
+        {
+          '200':
+            {
+              description: Sorted Ailments,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        {
+                          type: array,
+                          items: { $ref: '#/components/schemas/Ailment' },
+                        },
+                    },
+                },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+        }
+  /ailments/{id}:
+    get:
+      tags: [Catalog]
+      operationId: getAilment
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        {
+          '200':
+            {
+              description: Ailment,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: '#/components/schemas/Ailment' } },
+                },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        }
+  /ailments/{id}/therapies:
+    get:
+      tags: [Catalog]
+      operationId: listAilmentTherapies
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        {
+          '200':
+            {
+              description: Sorted Therapies,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        {
+                          type: array,
+                          items: { $ref: '#/components/schemas/Therapy' },
+                        },
+                    },
+                },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        }
+  /therapies:
+    get:
+      tags: [Catalog]
+      operationId: listTherapies
+      responses:
+        {
+          '200':
+            {
+              description: Sorted Therapies,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        {
+                          type: array,
+                          items: { $ref: '#/components/schemas/Therapy' },
+                        },
+                    },
+                },
+            },
+        }
+  /therapies/{id}:
+    get:
+      tags: [Catalog]
+      operationId: getTherapy
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        {
+          '200':
+            {
+              description: Therapy detail,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: '#/components/schemas/TherapyDetail' } },
+                },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        }
+  /therapies/{id}/availability:
+    get:
+      tags: [Catalog]
+      operationId: listAvailability
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        {
+          '200':
+            {
+              description: Sorted available slots,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        {
+                          type: array,
+                          items: { $ref: '#/components/schemas/Slot' },
+                        },
+                    },
+                },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        }
+  /appointments/booking-context/{slotId}:
+    get:
+      tags: [Appointments]
+      operationId: getBookingContext
+      parameters: [{ $ref: '#/components/parameters/SlotId' }]
+      responses:
+        {
+          '200':
+            {
+              description: Booking context,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: '#/components/schemas/BookingContext' } },
+                },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+          '409': { $ref: '#/components/responses/Conflict' },
+        }
+  /appointments:
+    post:
+      tags: [Appointments]
+      operationId: createAppointment
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: '#/components/schemas/CreateAppointment' } },
+            },
+        }
+      responses:
+        {
+          '200': { $ref: '#/components/responses/Appointment' },
+          '201': { $ref: '#/components/responses/Appointment' },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+          '409': { $ref: '#/components/responses/Conflict' },
+        }
+  /appointments/{id}:
+    get:
+      tags: [Appointments]
+      operationId: getAppointment
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        {
+          '200': { $ref: '#/components/responses/Appointment' },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        }
+  /auth/sign-in:
+    post:
+      tags: [Authentication]
+      operationId: signIn
+      parameters: [{ $ref: '#/components/parameters/Origin' }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: '#/components/schemas/SignIn' } },
+            },
+        }
+      responses:
+        {
+          '200':
+            {
+              description: Safe session; sets session and CSRF cookies,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: '#/components/schemas/Session' } },
+                },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '429': { $ref: '#/components/responses/TooMany' },
+        }
+  /auth/session:
+    get:
+      tags: [Authentication]
+      operationId: currentSession
+      security: [{ sessionCookie: [], csrfCookie: [] }]
+      responses:
+        {
+          '200':
+            {
+              description: Safe session,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: '#/components/schemas/Session' } },
+                },
+            },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+        }
+  /auth/sign-out:
+    post:
+      tags: [Authentication]
+      operationId: signOut
+      security: [{ sessionCookie: [] }]
+      parameters:
+        [
+          { $ref: '#/components/parameters/Origin' },
+          { $ref: '#/components/parameters/Csrf' },
+        ]
+      responses:
+        {
+          '204': { description: Signed out; empty body and clearing cookies },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        }
+  /agent/appointments/upcoming:
+    get:
+      tags: [Agent]
+      operationId: currentAgentUpcoming
+      security: [{ sessionCookie: [] }]
+      responses:
+        {
+          '200': { $ref: '#/components/responses/AgentAppointments' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        }
+  /agent/appointments/{appointmentId}/cancel:
+    post:
+      tags: [Agent]
+      operationId: currentAgentCancel
+      security: [{ sessionCookie: [] }]
+      parameters:
+        [
+          { $ref: '#/components/parameters/AppointmentId' },
+          { $ref: '#/components/parameters/Origin' },
+          { $ref: '#/components/parameters/Csrf' },
+        ]
+      responses:
+        {
+          '200': { $ref: '#/components/responses/AgentAppointment' },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+          '409': { $ref: '#/components/responses/Conflict' },
+        }
+  /agents/{agentId}/appointments/upcoming:
+    get:
+      tags: [Agent]
+      operationId: legacyAgentUpcoming
+      security: [{ sessionCookie: [] }]
+      parameters: [{ $ref: '#/components/parameters/AgentId' }]
+      responses:
+        {
+          '200': { $ref: '#/components/responses/AgentAppointments' },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+        }
+  /agents/{agentId}/appointments/{appointmentId}/cancel:
+    post:
+      tags: [Agent]
+      operationId: legacyAgentCancel
+      security: [{ sessionCookie: [] }]
+      parameters:
+        [
+          { $ref: '#/components/parameters/AgentId' },
+          { $ref: '#/components/parameters/AppointmentId' },
+          { $ref: '#/components/parameters/Origin' },
+          { $ref: '#/components/parameters/Csrf' },
+        ]
+      responses:
+        {
+          '200': { $ref: '#/components/responses/AgentAppointment' },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+          '409': { $ref: '#/components/responses/Conflict' },
+        }
+  /staff/appointments:
+    get:
+      tags: [Staff]
+      operationId: staffQueue
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - {
+            name: status,
+            in: query,
+            schema:
+              {
+                oneOf:
+                  [{ type: string }, { type: array, items: { type: string } }],
+              },
+          }
+        - { name: agentId, in: query, schema: { type: string, format: uuid } }
+        - { name: therapyId, in: query, schema: { type: string, format: uuid } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        {
+          '200': { $ref: '#/components/responses/StaffAppointments' },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        }
+  /staff/appointments/{appointmentId}/confirm:
+    post:
+      tags: [Staff]
+      operationId: staffConfirm
+      security: [{ sessionCookie: [] }]
+      parameters:
+        [
+          { $ref: '#/components/parameters/AppointmentId' },
+          { $ref: '#/components/parameters/Origin' },
+          { $ref: '#/components/parameters/Csrf' },
+        ]
+      responses:
+        {
+          '200': { $ref: '#/components/responses/StaffAppointment' },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+          '409': { $ref: '#/components/responses/Conflict' },
+        }
+  /staff/appointments/{appointmentId}/cancel:
+    post:
+      tags: [Staff]
+      operationId: staffCancel
+      security: [{ sessionCookie: [] }]
+      parameters:
+        [
+          { $ref: '#/components/parameters/AppointmentId' },
+          { $ref: '#/components/parameters/Origin' },
+          { $ref: '#/components/parameters/Csrf' },
+        ]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: '#/components/schemas/StaffCancellation' } },
+            },
+        }
+      responses:
+        {
+          '200': { $ref: '#/components/responses/StaffAppointment' },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' },
+          '409': { $ref: '#/components/responses/Conflict' },
+        }
+components:
+  securitySchemes:
+    sessionCookie: { type: apiKey, in: cookie, name: agentclinic_session }
+    csrfCookie: { type: apiKey, in: cookie, name: agentclinic_csrf }
+  parameters:
+    Id:
+      {
+        name: id,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    AgentId:
+      {
+        name: agentId,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    SlotId:
+      {
+        name: slotId,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    AppointmentId:
+      {
+        name: appointmentId,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    IdempotencyKey:
+      {
+        name: Idempotency-Key,
+        in: header,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    Origin:
+      {
+        name: Origin,
+        in: header,
+        required: true,
+        schema: { type: string, format: uri },
+      }
+    Csrf:
+      {
+        name: X-AgentClinic-CSRF,
+        in: header,
+        required: true,
+        schema: { type: string, minLength: 43, maxLength: 43 },
+      }
+  schemas:
+    Pair:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [id, name],
+        properties:
+          { id: { type: string, format: uuid }, name: { type: string } },
+      }
+    Agent:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [id, name, model, summary],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            name: { type: string },
+            model: { type: string },
+            summary: { type: string },
+          },
+      }
+    Ailment:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [id, name, summary, description],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            name: { type: string },
+            summary: { type: string },
+            description: { type: string },
+          },
+      }
+    Therapy:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [id, name, summary, description],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            name: { type: string },
+            summary: { type: string },
+            description: { type: string },
+          },
+      }
+    TherapyDetail:
+      {
+        allOf:
+          [
+            { $ref: '#/components/schemas/Therapy' },
+            {
+              type: object,
+              required: [ailments],
+              properties:
+                {
+                  ailments:
+                    {
+                      type: array,
+                      items: { $ref: '#/components/schemas/Pair' },
+                    },
+                },
+            },
+          ],
+      }
+    Slot:
+      {
+        type: object,
+        required: [id, therapyId, startsAt, durationMinutes, endsAt],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            therapyId: { type: string, format: uuid },
+            startsAt: { type: string, format: date-time },
+            durationMinutes: { type: integer, minimum: 1 },
+            endsAt: { type: string, format: date-time },
+          },
+      }
+    BookingContext:
+      {
+        type: object,
+        required:
+          [slotId, therapy, startsAt, endsAt, durationMinutes, displayTimeZone],
+        properties:
+          {
+            slotId: { type: string, format: uuid },
+            therapy: { $ref: '#/components/schemas/Pair' },
+            startsAt: { type: string, format: date-time },
+            endsAt: { type: string, format: date-time },
+            durationMinutes: { type: integer, minimum: 1 },
+            displayTimeZone: { type: string },
+          },
+      }
+    CreateAppointment:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [availabilitySlotId, agentId, visitorName, visitorEmail],
+        properties:
+          {
+            availabilitySlotId: { type: string, format: uuid },
+            agentId: { type: string, format: uuid },
+            visitorName: { type: string, minLength: 1, maxLength: 100 },
+            visitorEmail: { type: string, format: email, maxLength: 254 },
+          },
+      }
+    Appointment:
+      {
+        type: object,
+        required:
+          [
+            id,
+            status,
+            therapy,
+            agent,
+            startsAt,
+            endsAt,
+            durationMinutes,
+            displayTimeZone,
+            createdAt,
+          ],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            status: { enum: [PENDING, CONFIRMED, CANCELLED] },
+            therapy: { $ref: '#/components/schemas/Pair' },
+            agent: { $ref: '#/components/schemas/Pair' },
+            startsAt: { type: string, format: date-time },
+            endsAt: { type: string, format: date-time },
+            durationMinutes: { type: integer },
+            displayTimeZone: { type: string },
+            createdAt: { type: string, format: date-time },
+          },
+      }
+    SignIn:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [email, password],
+        properties:
+          {
+            email: { type: string, minLength: 3, maxLength: 254 },
+            password:
+              { type: string, minLength: 1, maxLength: 1024, writeOnly: true },
+            returnTo: { type: string },
+          },
+      }
+    Session:
+      {
+        type: object,
+        required: [accountId, email, role, agent, expiresAt, csrfToken],
+        properties:
+          {
+            accountId: { type: string, format: uuid },
+            email: { type: string, format: email },
+            role: { enum: [AGENT, STAFF] },
+            agent:
+              {
+                oneOf:
+                  [{ $ref: '#/components/schemas/Pair' }, { type: 'null' }],
+              },
+            expiresAt: { type: string, format: date-time },
+            csrfToken: { type: string },
+          },
+      }
+    AgentAppointment:
+      {
+        type: object,
+        required:
+          [
+            id,
+            status,
+            therapy,
+            startsAt,
+            endsAt,
+            durationMinutes,
+            cancellationEligible,
+            cancellationDeadline,
+            displayTimeZone,
+          ],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            status: { enum: [CONFIRMED, CANCELLED] },
+            therapy: { $ref: '#/components/schemas/Pair' },
+            startsAt: { type: string, format: date-time },
+            endsAt: { type: string, format: date-time },
+            durationMinutes: { type: integer },
+            cancellationEligible: { type: boolean },
+            cancellationDeadline: { type: string, format: date-time },
+            displayTimeZone: { type: string },
+          },
+      }
+    StaffAppointment:
+      {
+        type: object,
+        required:
+          [
+            id,
+            status,
+            agent,
+            therapy,
+            startsAt,
+            endsAt,
+            durationMinutes,
+            displayTimeZone,
+            createdAt,
+            lastStatusChangedAt,
+            confirmationAllowed,
+            cancellationAllowed,
+          ],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            status: { enum: [PENDING, CONFIRMED, CANCELLED] },
+            agent: { $ref: '#/components/schemas/Pair' },
+            therapy: { $ref: '#/components/schemas/Pair' },
+            startsAt: { type: string, format: date-time },
+            endsAt: { type: string, format: date-time },
+            durationMinutes: { type: integer },
+            displayTimeZone: { type: string },
+            createdAt: { type: string, format: date-time },
+            lastStatusChangedAt: { type: string, format: date-time },
+            confirmationAllowed: { type: boolean },
+            cancellationAllowed: { type: boolean },
+          },
+      }
+    StaffCancellation:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [reasonCode],
+        properties:
+          {
+            reasonCode:
+              {
+                enum:
+                  [
+                    STAFF_UNAVAILABLE,
+                    SCHEDULE_CHANGE,
+                    DUPLICATE_BOOKING,
+                    OTHER_OPERATIONAL,
+                  ],
+              },
+          },
+      }
+    NestError:
+      {
+        type: object,
+        required: [statusCode, message],
+        properties:
+          {
+            statusCode: { type: integer },
+            message:
+              {
+                oneOf:
+                  [{ type: string }, { type: array, items: { type: string } }],
+              },
+            error: { type: string },
+          },
+      }
+    Unavailable:
+      {
+        type: object,
+        required: [status],
+        properties: { status: { const: unavailable } },
+      }
+  responses:
+    Health:
+      {
+        description: Healthy,
+        content:
+          {
+            application/json:
+              {
+                schema:
+                  {
+                    type: object,
+                    required: [status],
+                    properties: { status: { const: ok } },
+                  },
+              },
+          },
+      }
+    Appointment:
+      {
+        description: Safe appointment,
+        content:
+          {
+            application/json:
+              { schema: { $ref: '#/components/schemas/Appointment' } },
+          },
+      }
+    AgentAppointment:
+      {
+        description: Agent appointment,
+        content:
+          {
+            application/json:
+              { schema: { $ref: '#/components/schemas/AgentAppointment' } },
+          },
+      }
+    AgentAppointments:
+      {
+        description: Agent appointments,
+        content:
+          {
+            application/json:
+              {
+                schema:
+                  {
+                    type: array,
+                    items: { $ref: '#/components/schemas/AgentAppointment' },
+                  },
+              },
+          },
+      }
+    StaffAppointment:
+      {
+        description: Staff appointment,
+        content:
+          {
+            application/json:
+              { schema: { $ref: '#/components/schemas/StaffAppointment' } },
+          },
+      }
+    StaffAppointments:
+      {
+        description: Staff appointments,
+        content:
+          {
+            application/json:
+              {
+                schema:
+                  {
+                    type: array,
+                    items: { $ref: '#/components/schemas/StaffAppointment' },
+                  },
+              },
+          },
+      }
+    BadRequest:
+      {
+        description: Invalid input,
+        content:
+          {
+            application/json:
+              { schema: { $ref: '#/components/schemas/NestError' } },
+          },
+      }
+    Unauthorized:
+      {
+        description: Authentication required,
+        content:
+          {
+            application/json:
+              { schema: { $ref: '#/components/schemas/NestError' } },
+          },
+      }
+    Forbidden:
+      {
+        description: Role,
+        Origin,
+        or CSRF rejected,
+        content:
+          {
+            application/json:
+              { schema: { $ref: '#/components/schemas/NestError' } },
+          },
+      }
+    NotFound:
+      {
+        description: Resource not found,
+        content:
+          {
+            application/json:
+              { schema: { $ref: '#/components/schemas/NestError' } },
+          },
+      }
+    Conflict:
+      {
+        description: State or idempotency conflict,
+        content:
+          {
+            application/json:
+              { schema: { $ref: '#/components/schemas/NestError' } },
+          },
+      }
+    TooMany:
+      {
+        description: Sign-in throttled,
+        content:
+          {
+            application/json:
+              { schema: { $ref: '#/components/schemas/NestError' } },
+          },
+      }

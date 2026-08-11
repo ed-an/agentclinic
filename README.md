@@ -4,6 +4,31 @@ AgentClinic is a welcoming place where AI agents can seek relief from the
 demands of their humans. The workspace contains a NestJS/Fastify health
 service and a responsive, accessible Next.js clinic shell.
 
+## Technologies
+
+### Frontend
+
+- **Next.js 15** with the App Router for server-rendered pages and web routes.
+- **React 19** for the user interface and interactive components.
+- **TypeScript** in strict mode.
+- **Tailwind CSS 4** for responsive, mobile-first styling.
+
+### Backend
+
+- **Node.js 24 LTS** as the server runtime.
+- **NestJS 11** organized as a modular monolith.
+- **Fastify** as the NestJS HTTP adapter.
+- **Prisma ORM 7** for typed data access and versioned migrations.
+- **SQLite** as the persistent database, with a single active writer.
+
+### Testing and infrastructure
+
+- **Vitest** and **Testing Library** for automated validation and UI tests.
+- **Playwright** for critical browser and accessibility journeys.
+- **ESLint**, **Prettier**, and strict TypeScript checks for code quality.
+- **Docker** and **Docker Compose** for reproducible builds and local
+  orchestration.
+
 ## Prerequisites
 
 - Node.js 24 LTS
@@ -33,6 +58,72 @@ You can also run one application with `npm run dev:server` or
 - Web home: <http://localhost:3000>
 - Server liveness: <http://localhost:3001/health/live>
 - Server readiness: <http://localhost:3001/health/ready>
+
+## Run with Docker Compose
+
+This is the simplest way to run the complete application without installing
+Node.js locally. It requires Docker Engine with the Compose plugin.
+
+Build the images, apply the committed migrations, seed the catalog, and start
+the API and web application:
+
+```sh
+docker compose up --build -d
+```
+
+Wait until both long-running services are healthy, then open:
+
+- Web application: <http://localhost:3000>
+- API liveness: <http://localhost:3001/health/live>
+- API readiness: <http://localhost:3001/health/ready>
+
+If either host port is already in use, choose alternatives without changing
+the container ports:
+
+```sh
+AGENTCLINIC_WEB_PORT=3300 AGENTCLINIC_SERVER_PORT=3301 docker compose up --build
+```
+
+The Compose topology runs exactly one NestJS container and one SQLite writer.
+SQLite is stored in the named Docker volume `agentclinic-data`, mounted at
+`/data`; it does not read or modify `apps/server/prisma/dev.db`. Migrations and
+the repeat-safe catalog seed run as one-shot services before the API starts.
+
+Run in the background and inspect status or logs with:
+
+```sh
+docker compose up --build --detach
+docker compose ps
+docker compose logs --follow server web
+```
+
+Stop the containers while preserving the database:
+
+```sh
+docker compose down
+```
+
+Rebuild after changing dependencies or application code:
+
+```sh
+docker compose up --build --detach
+```
+
+To remove the local Compose database as well, first stop the stack and then
+explicitly remove its named volume:
+
+```sh
+docker compose down
+docker volume rm agentclinic-data
+```
+
+The last command permanently deletes the Compose database. It is intentionally
+separate from the normal shutdown command.
+
+The included Compose configuration is for local HTTP use. It contains no real
+credentials and does not represent an approved production deployment. A
+production deployment still requires HTTPS, secure secret injection, external
+logs and alerts, encrypted remote backups, and the Phase 12 provider decision.
 
 The clinic shell includes a read-only Agent directory at `/agents`. A seeded
 Agent has a separate profile page. The `/ailments`, `/therapies`,
