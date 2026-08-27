@@ -1,10 +1,10 @@
-# Phase 11 dependency risk review
+# Phase 11 dependency risk review (updated 2026-08-27)
 
-The following known risks are explicitly accepted for the Phase 11 release. The current audit reports no critical advisory. This acceptance does not suppress advisories or claim that they are fixed.
+This review records both remediated advisories and known risks explicitly accepted for the Phase 11 release. The current audit reports no critical advisory. Acceptance does not suppress advisories or claim that they are fixed.
 
-## Blocked supported remediation
+## Remediated advisories
 
-- `GHSA-c96f-x56v-gq3h`: production path `@nestjs/platform-fastify@11.1.28` → `find-my-way@9.6.0` and `fastify@5.10.0` → the same router. `npm update` and `npm dedupe` retain NestJS's 9.6.0 installation. Adding 9.7.0 directly leaves the vulnerable nested runtime copy, so that attempted change was removed and is not claimed as remediation. HTTP/2 remains disabled, making the advisory's documented path unreachable in this application. Owner: server maintainers. Trigger: a supported NestJS 11 patch that resolves 9.7.0, enabling HTTP/2, or changed advisory reachability. No override is used.
+- `GHSA-c96f-x56v-gq3h`: remediated on 2026-08-27 through the supported `@nestjs/platform-fastify@11.2.1` dependency path, which installs `fastify@5.11.3` and the fixed `find-my-way@9.7.0`. The earlier acceptance for the production 9.6.0 router is closed; no transitive override is used.
 
 ## Accepted pending supported framework remediation
 

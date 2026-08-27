@@ -1,14 +1,20 @@
 # Security known risks
 
-## 2026-08-10 Phase 11 reassessment
+## 2026-08-27 router advisory remediation
 
-Supported npm update/dedupe retains `find-my-way@9.6.0` under `@nestjs/platform-fastify@11.1.28`; a direct 9.7.0 install leaves that runtime copy in place and was therefore removed. The HTTP/2-only advisory path remains disabled and accepted pending a supported NestJS patch. PostCSS and Sharp remain accepted, currently unreachable runtime risks whose supported npm remediation requires the prohibited Next.js 16.3.0 major upgrade. Full evidence, owners, and triggers are in [dependency-risk-review.md](dependency-risk-review.md).
+The production server now resolves `@nestjs/platform-fastify@11.2.1` → `fastify@5.11.3` / `find-my-way@9.7.0`. This supported framework update remediates `GHSA-c96f-x56v-gq3h`; the earlier acceptance for the 9.6.0 router is closed. PostCSS and Sharp remain accepted, currently unreachable runtime risks whose supported npm remediation requires the prohibited Next.js 16.3.0 major upgrade. Full evidence, owners, and triggers are in [dependency-risk-review.md](dependency-risk-review.md).
+
+## 2026-08-10 Phase 11 reassessment (superseded router status)
+
+At the time of this reassessment, supported npm update/dedupe retained `find-my-way@9.6.0` under `@nestjs/platform-fastify@11.1.28`; a direct 9.7.0 install left that runtime copy in place and was therefore removed. The HTTP/2-only advisory path was disabled and accepted pending a supported NestJS patch. The 2026-08-27 update above supersedes this router status.
 
 ## 2026-08-09 dependency advisory review
 
-The following records preserve the Phase 10 assessment. Phase 11 supersedes the router status above while retaining the Next-bundled risk context.
+The following records preserve the Phase 10 assessment. The 2026-08-27 update supersedes the router status below while retaining the Next-bundled risk context.
 
 ### NestJS/Fastify router
+
+**Historical record — remediated 2026-08-27.**
 
 - **Advisory:** `GHSA-c96f-x56v-gq3h`
 - **Affected installation:** `find-my-way@9.6.0`
