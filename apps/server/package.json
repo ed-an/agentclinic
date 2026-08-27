@@ -8,6 +8,7 @@
     "start": "node dist/main.js",
     "prebuild": "npm run prisma:generate",
     "build": "nest build",
+    "prelint": "npm run prisma:generate",
     "lint": "eslint . --max-warnings=0",
     "pretypecheck": "npm run prisma:generate",
     "typecheck": "tsc --noEmit --incremental false",
