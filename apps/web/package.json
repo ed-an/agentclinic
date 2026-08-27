@@ -13,7 +13,7 @@
     "test:browser": "npm run build && playwright test"
   },
   "dependencies": {
-    "next": "^15.4.6",
+    "next": "^15.5.24",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
